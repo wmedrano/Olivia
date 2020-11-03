@@ -24,14 +24,14 @@ impl Processor {
 
 impl jack::ProcessHandler for Processor {
     fn process(&mut self, _: &jack::Client, ps: &jack::ProcessScope) -> jack::Control {
-        let mut ports = match &mut self.outputs {
-            [left, right] => olivia_core::processor::Ports {
-                left: left.as_mut_slice(ps),
-                right: right.as_mut_slice(ps),
-            },
+        let (out_left, out_right) = match &mut self.outputs {
+            [left, right] => (
+                left.as_mut_slice(ps),
+                right.as_mut_slice(ps),
+            ),
         };
         for _ in self.midi_input.iter(ps) {}
-        self.processor.process(&mut ports);
+        self.processor.process(out_left, out_right);
         jack::Control::Continue
     }
 }
