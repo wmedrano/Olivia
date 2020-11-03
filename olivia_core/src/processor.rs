@@ -16,6 +16,10 @@ impl Processor {
         }
     }
 
+    pub fn tracks_mut(&mut self) -> impl Iterator<Item=&'_ mut Track> {
+        self.tracks.iter_mut()
+    }
+
     pub fn add_track(&mut self, track: Track) {
         self.tracks.push(track);
     }
@@ -40,7 +44,7 @@ impl Processor {
         let mut s = plugin::Silence;
         s.process(&[], out_left, out_right);
 
-        for track in self.tracks.iter_mut() {
+        for track in self.tracks_mut() {
             track.process(midi);
             for (dst, src) in out_left.iter_mut().zip(track.out_left.iter().cloned()) {
                 *dst += src * track.volume;
