@@ -141,7 +141,12 @@ dependencies = [
  "env_logger",
  "jack",
  "log",
+ "olivia_core",
 ]
+
+[[package]]
+name = "olivia_core"
+version = "0.1.0"
 
 [[package]]
 name = "quick-error"
