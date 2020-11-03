@@ -2,4 +2,5 @@
 
 members = [
     "olivia_backend",
+    "olivia_core",
 ]

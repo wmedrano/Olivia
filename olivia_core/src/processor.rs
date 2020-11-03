@@ -34,7 +34,7 @@ mod tests {
 
         let mut p = Processor::new();
         assert_ne!([left, right], [want_left, want_right]);
-        p.process(&mut left, &mut right);
+        p.process(&[], &mut left, &mut right);
         assert_eq!([left, right], [want_left, want_right]);
     }
 }
