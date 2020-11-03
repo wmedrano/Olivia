@@ -1,3 +1,4 @@
+pub mod example_plugin;
 pub mod plugin;
 pub mod processor;
 

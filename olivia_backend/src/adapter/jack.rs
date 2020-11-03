@@ -4,13 +4,13 @@ pub struct Processor {
     midi_input: jack::Port<jack::MidiIn>,
     temp_midi_buffer: Vec<olivia_core::TimedMidi<'static>>,
     outputs: [jack::Port<jack::AudioOut>; 2],
-    processor: olivia_core::processor::Processor,
+    processor: olivia_lib::Processor,
 }
 
 impl Processor {
     pub fn new(
         client: &jack::Client,
-        processor: olivia_core::processor::Processor,
+        processor: olivia_lib::Processor,
     ) -> Result<Processor, jack::Error> {
         let midi_input = client.register_port("midi_input", jack::MidiIn::default())?;
         let outputs = [

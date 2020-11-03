@@ -1,5 +1,4 @@
 use crate::plugin;
-use crate::plugin::PluginInstance;
 use crate::TimedMidi;
 
 #[derive(Debug)]
@@ -16,7 +15,19 @@ impl Processor {
         }
     }
 
-    pub fn tracks_mut(&mut self) -> impl Iterator<Item=&'_ mut Track> {
+    pub fn process(&mut self, midi: &[TimedMidi<'_>], out_left: &mut [f32], out_right: &mut [f32]) {
+        zero_buffer(out_left);
+        zero_buffer(out_right);
+
+        let master_volume = self.volume;
+        for track in self.tracks_mut() {
+            track.process(midi);
+            mix_into(out_left, &track.out_left, track.volume * master_volume);
+            mix_into(out_right, &track.out_right, track.volume * master_volume);
+        }
+    }
+
+    pub fn tracks_mut(&mut self) -> impl Iterator<Item = &'_ mut Track> {
         self.tracks.iter_mut()
     }
 
@@ -36,25 +47,6 @@ impl Processor {
 impl Default for Processor {
     fn default() -> Processor {
         Processor::new()
-    }
-}
-
-impl Processor {
-    pub fn process(&mut self, midi: &[TimedMidi<'_>], out_left: &mut [f32], out_right: &mut [f32]) {
-        let mut s = plugin::Silence;
-        s.process(&[], out_left, out_right);
-
-        for track in self.tracks_mut() {
-            track.process(midi);
-            for (dst, src) in out_left.iter_mut().zip(track.out_left.iter().cloned()) {
-                *dst += src * track.volume;
-            }
-            for (dst, src) in out_right.iter_mut().zip(track.out_right.iter().cloned()) {
-                *dst += src * track.volume;
-            }
-        }
-        scale_buffer(out_left, self.volume);
-        scale_buffer(out_right, self.volume);
     }
 }
 
@@ -86,15 +78,22 @@ impl Track {
     }
 }
 
-fn scale_buffer(b: &mut [f32], scalar: f32) {
+fn zero_buffer(b: &mut [f32]) {
     for o in b.iter_mut() {
-        *o *= scalar;
+        *o = 0.0;
+    }
+}
+
+fn mix_into(dst: &mut [f32], src: &[f32], volume: f32) {
+    for (o, i) in dst.iter_mut().zip(src.iter().cloned()) {
+        *o += i * volume;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::plugin::PluginInstance;
 
     #[derive(Debug)]
     struct OnePluginInstance;
