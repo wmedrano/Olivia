@@ -1,3 +1,4 @@
+pub mod plugin;
 pub mod processor;
 
 pub struct TimedMidi<'a> {

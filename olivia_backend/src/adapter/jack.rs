@@ -19,7 +19,10 @@ impl Processor {
         ];
         // This is a somewhat large but arbitrary number.
         let temp_midi_buffer_size = 1_000_000;
-        info!("Initializing midi with buffer size {}.", temp_midi_buffer_size);
+        info!(
+            "Initializing midi with buffer size {}.",
+            temp_midi_buffer_size
+        );
         let temp_midi_buffer = Vec::with_capacity(temp_midi_buffer_size);
         Ok(Processor {
             midi_input,
@@ -46,7 +49,8 @@ impl jack::ProcessHandler for Processor {
         let (out_left, out_right) = match &mut self.outputs {
             [left, right] => (left.as_mut_slice(ps), right.as_mut_slice(ps)),
         };
-        self.processor.process(&self.temp_midi_buffer, out_left, out_right);
+        self.processor
+            .process(&self.temp_midi_buffer, out_left, out_right);
         jack::Control::Continue
     }
 }
