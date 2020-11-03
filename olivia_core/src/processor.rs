@@ -1,3 +1,5 @@
+use crate::TimedMidi;
+
 #[derive(Debug, PartialEq)]
 pub struct Processor {}
 
@@ -8,7 +10,8 @@ impl Processor {
 }
 
 impl Processor {
-    pub fn process(&mut self, out_left: &mut [f32], out_right: &mut [f32]) {
+    pub fn process(&mut self, midi: &[TimedMidi<'_>], out_left: &mut [f32], out_right: &mut [f32]) {
+        for _ in midi.iter() {}
         for channel in [out_left, out_right].iter_mut() {
             for o in channel.iter_mut() {
                 *o = 0.0;

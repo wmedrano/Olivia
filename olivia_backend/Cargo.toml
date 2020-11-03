@@ -11,3 +11,4 @@ env_logger = "0.7"
 jack = "0.6"
 log = "0.4"
 olivia_core = {path = "../olivia_core" }
+wmidi = "4.0"
