@@ -28,3 +28,16 @@ impl jack::ProcessHandler for Processor {
         jack::Control::Continue
     }
 }
+
+pub fn initialize_logging() {
+    jack::set_error_callback(error_callback);
+    jack::set_info_callback(info_callback);
+}
+
+fn error_callback(msg: &str) {
+    error!("{}", msg);
+}
+
+fn info_callback(msg: &str) {
+    info!("{}", msg);
+}

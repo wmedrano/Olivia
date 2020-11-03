@@ -6,6 +6,7 @@ mod adapter;
 fn main() {
     env_logger::init();
     
+    adapter::jack::initialize_logging();
     let (client, status) = jack::Client::new("olivia", jack::ClientOptions::NO_START_SERVER).unwrap();
     info!(
         "Opened JACK client {} with status {:?}.",
