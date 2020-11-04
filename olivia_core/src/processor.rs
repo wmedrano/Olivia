@@ -22,8 +22,9 @@ impl Processor {
         let master_volume = self.volume;
         for track in self.tracks_mut() {
             track.process(midi);
-            mix_into(out_left, &track.out_left, track.volume * master_volume);
-            mix_into(out_right, &track.out_right, track.volume * master_volume);
+            let volume = track.volume * master_volume;
+            mix_into(out_left, &track.out_left, volume);
+            mix_into(out_right, &track.out_right, volume);
         }
     }
 
