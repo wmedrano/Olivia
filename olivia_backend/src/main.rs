@@ -38,8 +38,13 @@ async fn main() -> std::io::Result<()> {
         let mut some_controller = controller_arc.lock().unwrap();
         // Since we only have a single worker thread, we should only ever take the value once ensuring that some
         // controller is indeed Some(controller) rather than None by this point.
-        let controller = some_controller.take().unwrap();
-        actix_web::App::new().data(controller)
+        let handler = adapter::actix_server::Handler::new(some_controller.take().unwrap());
+        actix_web::App::new()
+            .data(std::sync::Mutex::new(handler))
+            .route(
+                "/plugins",
+                actix_web::web::get().to(adapter::actix_server::get_plugins),
+            )
     })
     .workers(1)
     .bind("127.0.0.1:8080")?

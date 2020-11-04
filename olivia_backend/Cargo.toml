@@ -13,4 +13,5 @@ env_logger = "0.7"
 jack = "0.6"
 log = "0.4"
 olivia_core = {path = "../olivia_core" }
+serde = { version = "1.0", features = ["derive"] }
 wmidi = "4.0"

@@ -42,6 +42,10 @@ impl PluginFactory {
         self.build_plugin(plugin_id)
             .map(|p| olivia_core::processor::Track::new(p, buffer_size, volume))
     }
+
+    pub fn metadata(&self) -> impl Iterator<Item = &'_ PluginMetadata> {
+        self.builders.values().map(|(m, _)| m)
+    }
 }
 
 pub trait PluginBuilder: Send {
@@ -49,7 +53,7 @@ pub trait PluginBuilder: Send {
     fn build(&self) -> Box<dyn PluginInstance>;
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize)]
 pub struct PluginMetadata {
     pub id: String,
     pub display_name: String,

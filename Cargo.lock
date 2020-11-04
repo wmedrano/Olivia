@@ -1141,6 +1141,7 @@ dependencies = [
  "jack",
  "log",
  "olivia_core",
+ "serde",
  "wmidi",
 ]
 

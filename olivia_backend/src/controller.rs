@@ -48,6 +48,10 @@ impl Controller {
         self.commands.send(Command::AddTrack(core_track)).unwrap();
         self.tracks.push(track);
     }
+
+    pub fn plugin_factory(&self) -> &plugin_factory::PluginFactory {
+        &self.plugin_factory
+    }
 }
 
 pub struct Processor {
