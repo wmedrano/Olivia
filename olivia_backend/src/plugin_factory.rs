@@ -42,10 +42,6 @@ impl PluginFactory {
         self.build_plugin(plugin_id)
             .map(|p| olivia_core::processor::Track::new(p, buffer_size, volume))
     }
-
-    pub fn metadata(&self, id: &str) -> Option<&'_ PluginMetadata> {
-        self.builders.get(id).map(|(m, _)| m)
-    }
 }
 
 pub trait PluginBuilder {

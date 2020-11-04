@@ -3,8 +3,6 @@ use olivia_core::TimedMidi;
 
 enum Command {
     AddTrack(olivia_core::processor::Track),
-    RemoveTrack(usize),
-    SetTrackVolume(usize, f32),
 }
 
 pub struct Track {
@@ -46,26 +44,6 @@ impl Controller {
         self.commands.send(Command::AddTrack(core_track)).unwrap();
         self.tracks.push(track);
     }
-
-    pub fn remove_track(&mut self, index: usize) {
-        if index < self.tracks.len() {
-            self.tracks.remove(index);
-            self.commands.send(Command::RemoveTrack(index)).unwrap();
-        }
-    }
-
-    pub fn set_track_volume(&mut self, index: usize, volume: f32) {
-        if index < self.tracks.len() {
-            self.tracks[index].volume = volume;
-            self.commands
-                .send(Command::SetTrackVolume(index, volume))
-                .unwrap();
-        }
-    }
-
-    pub fn tracks(&self) -> impl Iterator<Item = &'_ Track> {
-        self.tracks.iter()
-    }
 }
 
 pub struct Processor {
@@ -78,12 +56,6 @@ impl Processor {
         for command in self.commands.try_iter() {
             match command {
                 Command::AddTrack(t) => self.inner.add_track(t),
-                Command::RemoveTrack(index) => self.inner.remove_track(index),
-                Command::SetTrackVolume(index, volume) => {
-                    if let Some(t) = self.inner.tracks_mut().skip(index).next() {
-                        t.set_volume(volume);
-                    }
-                }
             }
         }
         self.inner.process(midi, out_left, out_right);
