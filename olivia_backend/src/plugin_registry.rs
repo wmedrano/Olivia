@@ -1,5 +1,5 @@
-use olivia_lib::plugin_factory;
-use olivia_lib::plugin_factory::PluginFactory;
+use crate::plugin_factory;
+use crate::plugin_factory::PluginFactory;
 
 pub fn new_plugin_factory() -> PluginFactory {
     let mut factory = PluginFactory::new();

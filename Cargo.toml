@@ -3,5 +3,4 @@
 members = [
     "olivia_backend",
     "olivia_core",
-    "olivia_lib",
 ]

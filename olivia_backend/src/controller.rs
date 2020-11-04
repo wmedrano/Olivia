@@ -1,9 +1,5 @@
-#[macro_use]
-extern crate log;
-
+use crate::plugin_factory;
 use olivia_core::TimedMidi;
-
-pub mod plugin_factory;
 
 enum Command {
     AddTrack(olivia_core::processor::Track),

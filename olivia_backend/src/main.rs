@@ -2,7 +2,9 @@
 extern crate log;
 
 mod adapter;
+mod controller;
 mod plugin_registry;
+mod plugin_factory;
 
 fn main() {
     env_logger::init();
@@ -11,13 +13,13 @@ fn main() {
     let plugin_factory = plugin_registry::new_plugin_factory();
 
     info!("Creating Olivia processor.");
-    let (controller, processor) = olivia_lib::Controller::new(plugin_factory);
+    let (controller, processor) = controller::Controller::new(plugin_factory);
 
     info!("Running Olivia with JACK backend.");
     run_with_jack(controller, processor);
 }
 
-fn run_with_jack(mut controller: olivia_lib::Controller, processor: olivia_lib::Processor) {
+fn run_with_jack(mut controller: controller::Controller, processor: controller::Processor) {
     adapter::jack::initialize_logging();
     let (client, status) =
         jack::Client::new("olivia", jack::ClientOptions::NO_START_SERVER).unwrap();
