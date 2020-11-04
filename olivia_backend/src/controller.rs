@@ -5,6 +5,7 @@ enum Command {
     AddTrack(olivia_core::processor::Track),
 }
 
+#[derive(Clone, serde::Serialize)]
 pub struct Track {
     pub name: String,
     pub volume: f32,
@@ -51,6 +52,10 @@ impl Controller {
 
     pub fn plugin_factory(&self) -> &plugin_factory::PluginFactory {
         &self.plugin_factory
+    }
+
+    pub fn tracks(&self) -> &[Track] {
+        &self.tracks
     }
 }
 
