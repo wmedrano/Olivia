@@ -11,12 +11,9 @@ pub struct JackBackend {
 }
 
 impl JackBackend {
-    pub fn new(
-        processor: controller::Processor,
-    ) -> Result<JackBackend, jack::Error> {
+    pub fn new(processor: controller::Processor) -> Result<JackBackend, jack::Error> {
         initialize_logging();
-        let (client, status) =
-            jack::Client::new("olivia", jack::ClientOptions::NO_START_SERVER)?;
+        let (client, status) = jack::Client::new("olivia", jack::ClientOptions::NO_START_SERVER)?;
         info!(
             "Opened JACK client {} with status {:?}.",
             client.name(),

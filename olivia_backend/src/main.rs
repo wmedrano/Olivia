@@ -32,9 +32,17 @@ async fn main() -> std::io::Result<()> {
     controller.add_track("Track 01".to_string(), "builtin_silence", buffer_size);
 
     info!("Starting actix webserver.");
-    actix_web::HttpServer::new(move || actix_web::App::new())
-        .workers(1)
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    let controller = std::sync::Arc::new(std::sync::Mutex::new(Some(controller)));
+    actix_web::HttpServer::new(move || {
+        let controller_arc = controller.clone();
+        let mut some_controller = controller_arc.lock().unwrap();
+        // Since we only have a single worker thread, we should only ever take the value once ensuring that some
+        // controller is indeed Some(controller) rather than None by this point.
+        let controller = some_controller.take().unwrap();
+        actix_web::App::new().data(controller)
+    })
+    .workers(1)
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
