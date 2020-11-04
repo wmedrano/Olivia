@@ -52,7 +52,7 @@ impl Default for Processor {
 
 #[derive(Debug)]
 pub struct Track {
-    plugin: Box<dyn plugin::PluginInstance>,
+    plugins: Vec<Box<dyn plugin::PluginInstance>>,
     volume: f32,
     out_left: Vec<f32>,
     out_right: Vec<f32>,
@@ -60,8 +60,10 @@ pub struct Track {
 
 impl Track {
     pub fn new(plugin: Box<dyn plugin::PluginInstance>, buffer_size: usize, volume: f32) -> Track {
+        let mut plugins = Vec::with_capacity(128);
+        plugins.push(plugin);
         Track {
-            plugin,
+            plugins,
             volume,
             out_left: vec![0.0; buffer_size],
             out_right: vec![0.0; buffer_size],
@@ -73,8 +75,9 @@ impl Track {
     }
 
     fn process(&mut self, midi: &[TimedMidi<'_>]) {
-        self.plugin
-            .process(midi, &mut self.out_left, &mut self.out_right);
+        for plugin in self.plugins.iter_mut() {
+            plugin.process(midi, &mut self.out_left, &mut self.out_right);
+        }
     }
 }
 

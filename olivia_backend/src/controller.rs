@@ -6,9 +6,15 @@ enum Command {
 }
 
 #[derive(Clone, serde::Serialize)]
+pub struct PluginInstance {
+    plugin_id: String,
+}
+
+#[derive(Clone, serde::Serialize)]
 pub struct Track {
     pub name: String,
     pub volume: f32,
+    pub plugin_instances: Vec<PluginInstance>,
 }
 
 pub struct Controller {
@@ -41,6 +47,7 @@ impl Controller {
         let track = Track {
             name: track_name,
             volume: 1.0,
+            plugin_instances: vec![PluginInstance{plugin_id: plugin_id.to_string()}],
         };
         let core_track = self
             .plugin_factory
