@@ -33,6 +33,10 @@ impl Controller {
     }
 
     pub fn add_track(&mut self, track_name: String, plugin_id: &str, buffer_size: usize) {
+        info!(
+            "Creating track \"{}\" with plugin \"{}\".",
+            track_name, plugin_id
+        );
         let track = Track {
             name: track_name,
             volume: 1.0,
@@ -53,11 +57,15 @@ pub struct Processor {
 
 impl Processor {
     pub fn process(&mut self, midi: &[TimedMidi], out_left: &mut [f32], out_right: &mut [f32]) {
+        self.handle_commands();
+        self.inner.process(midi, out_left, out_right);
+    }
+
+    fn handle_commands(&mut self) {
         for command in self.commands.try_iter() {
             match command {
                 Command::AddTrack(t) => self.inner.add_track(t),
             }
         }
-        self.inner.process(midi, out_left, out_right);
     }
 }

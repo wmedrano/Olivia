@@ -44,7 +44,7 @@ impl PluginFactory {
     }
 }
 
-pub trait PluginBuilder {
+pub trait PluginBuilder: Send {
     fn metadata(&self) -> PluginMetadata;
     fn build(&self) -> Box<dyn PluginInstance>;
 }

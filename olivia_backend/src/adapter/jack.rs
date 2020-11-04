@@ -1,18 +1,28 @@
-use std::convert::TryFrom;
 use crate::controller;
+use crate::io_backend::IoBackend;
+use std::convert::TryFrom;
 
-pub struct Processor {
+pub struct JackBackend {
+    client: Option<jack::Client>,
     midi_input: jack::Port<jack::MidiIn>,
     temp_midi_buffer: Vec<olivia_core::TimedMidi<'static>>,
     outputs: [jack::Port<jack::AudioOut>; 2],
     processor: controller::Processor,
 }
 
-impl Processor {
+impl JackBackend {
     pub fn new(
-        client: &jack::Client,
         processor: controller::Processor,
-    ) -> Result<Processor, jack::Error> {
+    ) -> Result<JackBackend, jack::Error> {
+        initialize_logging();
+        let (client, status) =
+            jack::Client::new("olivia", jack::ClientOptions::NO_START_SERVER)?;
+        info!(
+            "Opened JACK client {} with status {:?}.",
+            client.name(),
+            status
+        );
+
         let midi_input = client.register_port("midi_input", jack::MidiIn::default())?;
         let outputs = [
             client.register_port("output_l", jack::AudioOut::default())?,
@@ -25,7 +35,8 @@ impl Processor {
             temp_midi_buffer_size
         );
         let temp_midi_buffer = Vec::with_capacity(temp_midi_buffer_size);
-        Ok(Processor {
+        Ok(JackBackend {
+            client: Some(client),
             midi_input,
             temp_midi_buffer,
             outputs,
@@ -34,7 +45,24 @@ impl Processor {
     }
 }
 
-impl jack::ProcessHandler for Processor {
+impl IoBackend for JackBackend {
+    fn name(&self) -> &'static str {
+        "JACK"
+    }
+
+    fn buffer_size(&self) -> usize {
+        self.client.as_ref().unwrap().buffer_size() as usize
+    }
+
+    fn run_process_loop(self) {
+        let mut s = self;
+        let client = s.client.take().unwrap();
+        let _async_client = client.activate_async((), s).unwrap();
+        std::thread::park();
+    }
+}
+
+impl jack::ProcessHandler for JackBackend {
     fn process(&mut self, _: &jack::Client, ps: &jack::ProcessScope) -> jack::Control {
         self.temp_midi_buffer.clear();
         for raw_midi in self.midi_input.iter(ps) {
@@ -56,7 +84,7 @@ impl jack::ProcessHandler for Processor {
     }
 }
 
-pub fn initialize_logging() {
+fn initialize_logging() {
     jack::set_error_callback(error_callback);
     jack::set_info_callback(info_callback);
 }
