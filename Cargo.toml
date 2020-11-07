@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "olivia_backend",
-    "olivia_core",
+    "backend",
+    "core",
 ]
