@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
     let backend = adapter::jack::JackBackend::new(processor).unwrap();
     // let backend = adapter::dummy_io::DummyBackend(processor);
     info!("Running Olivia with {} backend.", backend.name());
-    let buffer_size = backend.buffer_size();
+    controller.set_buffer_size(backend.buffer_size());
     let _process_thread = std::thread::spawn(move || {
         let backend_name = backend.name();
         backend.run_process_loop();
@@ -31,7 +31,13 @@ async fn main() -> std::io::Result<()> {
     });
 
     info!("Creating initial track.");
-    controller.add_track("Track 01".to_string(), "builtin_sine", buffer_size);
+    let initial_track = controller::Track {
+        id: controller::IntId(1),
+        name: "Track 01".to_string(),
+        volume: 1.0,
+        plugin_instances: Vec::new(),
+    };
+    controller.add_track(initial_track).unwrap();
 
     info!("Starting actix webserver.");
     let controller = std::sync::Arc::new(std::sync::Mutex::new(Some(controller)));
@@ -50,6 +56,10 @@ async fn main() -> std::io::Result<()> {
             .route(
                 "/tracks",
                 actix_web::web::get().to(adapter::actix_server::get_tracks),
+            )
+            .route(
+                "/tracks/{track_id}",
+                actix_web::web::get().to(adapter::actix_server::get_track),
             )
     })
     .workers(1)
