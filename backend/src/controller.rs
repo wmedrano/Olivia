@@ -40,6 +40,7 @@ pub struct Controller {
 pub enum ControllerError {
     PluginInstancesNotYetSupported(Track),
     TrackAlreadyExists(IntId, Track),
+    BufferSizeHasNotBeenSet,
 }
 
 impl std::error::Error for ControllerError {}
@@ -72,6 +73,13 @@ impl Controller {
     }
 
     pub fn add_track(&mut self, track: Track) -> Result<(), ControllerError> {
+        if self.buffer_size == 0 {
+            error!(
+                "Attempted to create track without setting buffer size. Track: {:?}.",
+                track
+            );
+            return Err(ControllerError::BufferSizeHasNotBeenSet);
+        }
         if !track.plugin_instances.is_empty() {
             error!("Failed to create track {} because plugin instances are not yet supported. Track: {:?}.", track.name, track);
             return Err(ControllerError::PluginInstancesNotYetSupported(track));
