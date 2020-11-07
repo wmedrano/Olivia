@@ -51,6 +51,10 @@ impl IoBackend for JackBackend {
         self.client.as_ref().unwrap().buffer_size() as usize
     }
 
+    fn sample_rate(&self) -> f32 {
+        self.client.as_ref().unwrap().sample_rate() as f32
+    }
+
     fn run_process_loop(self) {
         let mut s = self;
         let client = s.client.take().unwrap();

@@ -47,7 +47,9 @@ impl Controller {
         let track = Track {
             name: track_name,
             volume: 1.0,
-            plugin_instances: vec![PluginInstance{plugin_id: plugin_id.to_string()}],
+            plugin_instances: vec![PluginInstance {
+                plugin_id: plugin_id.to_string(),
+            }],
         };
         let core_track = self
             .plugin_factory

@@ -13,8 +13,11 @@ impl PluginFactory {
         }
     }
 
-    pub fn register(&mut self, b: Box<dyn PluginBuilder>) -> Result<(), PluginRegistrationError> {
-        let metadata = b.metadata();
+    pub fn register<B: 'static + PluginBuilder>(
+        &mut self,
+        builder: B,
+    ) -> Result<(), PluginRegistrationError> {
+        let metadata = builder.metadata();
         if let Err(e) = metadata.validate() {
             return Err(PluginRegistrationError::InvalidMetadata(metadata, e));
         }
@@ -25,7 +28,8 @@ impl PluginFactory {
             ));
         }
         info!("Registered plugin {}: {:?}.", metadata.id, metadata);
-        self.builders.insert(metadata.id.clone(), (metadata, b));
+        self.builders
+            .insert(metadata.id.clone(), (metadata, Box::new(builder)));
         Ok(())
     }
 

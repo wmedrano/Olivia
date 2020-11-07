@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     info!("Creating initial track.");
-    controller.add_track("Track 01".to_string(), "builtin_silence", buffer_size);
+    controller.add_track("Track 01".to_string(), "builtin_sine", buffer_size);
 
     info!("Starting actix webserver.");
     let controller = std::sync::Arc::new(std::sync::Mutex::new(Some(controller)));
