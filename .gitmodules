@@ -1,0 +1,3 @@
+[submodule "devtools/j2sdl2"]
+	path = devtools/j2sdl2
+	url = https://github.com/wmedrano/j2sdl2.git
