@@ -18,8 +18,8 @@ impl Handler {
             .collect()
     }
 
-    fn tracks(&self) -> &[crate::controller::Track] {
-        self.controller.tracks()
+    fn controller(&self) -> &Controller {
+        &self.controller
     }
 }
 
@@ -30,5 +30,6 @@ pub async fn get_plugins(data: actix_web::web::Data<Mutex<Handler>>) -> impl act
 
 pub async fn get_tracks(data: actix_web::web::Data<Mutex<Handler>>) -> impl actix_web::Responder {
     let handler = data.lock().unwrap();
-    actix_web::web::Json(handler.tracks().to_vec())
+    let tracks: Vec<_> = handler.controller().tracks().cloned().collect();
+    actix_web::web::Json(tracks)
 }

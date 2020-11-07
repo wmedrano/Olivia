@@ -60,15 +60,17 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(plugin: Box<dyn plugin::PluginInstance>, buffer_size: usize, volume: f32) -> Track {
-        let mut plugins = Vec::with_capacity(128);
-        plugins.push(plugin);
+    pub fn new(buffer_size: usize, volume: f32) -> Track {
         Track {
-            plugins,
+            plugins: Vec::with_capacity(128),
             volume,
             out_left: vec![0.0; buffer_size],
             out_right: vec![0.0; buffer_size],
         }
+    }
+
+    pub fn add_plugin(&mut self, plugin: Box<dyn plugin::PluginInstance>) {
+        self.plugins.push(plugin)
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -108,6 +110,12 @@ mod tests {
         }
     }
 
+    fn new_track(volume: f32) -> Track {
+        let mut t = Track::new(1024, volume);
+        t.add_plugin(Box::new(OnePluginInstance));
+        t
+    }
+
     fn fill_buffer(b: &mut [f32], scalar: f32) {
         for o in b.iter_mut() {
             *o = scalar;
@@ -128,8 +136,8 @@ mod tests {
     #[test]
     fn tracks_are_played() {
         let mut p = Processor::new();
-        p.add_track(Track::new(Box::new(OnePluginInstance), 1024, 0.5));
-        p.add_track(Track::new(Box::new(OnePluginInstance), 1024, 0.25));
+        p.add_track(new_track(0.5));
+        p.add_track(new_track(0.25));
 
         let mut left = [0.0; 2];
         let mut right = [0.0; 2];
@@ -141,8 +149,8 @@ mod tests {
     #[test]
     fn tracks_are_removed() {
         let mut p = Processor::new();
-        p.add_track(Track::new(Box::new(OnePluginInstance), 1024, 0.5));
-        p.add_track(Track::new(Box::new(OnePluginInstance), 1024, 0.25));
+        p.add_track(new_track(0.5));
+        p.add_track(new_track(0.25));
         p.remove_track(0);
 
         let mut left = [0.0; 2];
@@ -155,7 +163,7 @@ mod tests {
     #[test]
     fn tracks_can_set_volume() {
         let mut p = Processor::new();
-        let mut t = Track::new(Box::new(OnePluginInstance), 1024, 1.0);
+        let mut t = new_track(1.0);
         t.set_volume(0.5);
         p.add_track(t);
 
@@ -169,7 +177,7 @@ mod tests {
     #[test]
     fn processor_can_set_volume() {
         let mut p = Processor::new();
-        p.add_track(Track::new(Box::new(OnePluginInstance), 1024, 1.0));
+        p.add_track(new_track(1.0));
         p.set_volume(2.0);
 
         let mut left = [0.0; 2];

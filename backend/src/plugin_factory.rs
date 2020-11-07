@@ -33,20 +33,6 @@ impl PluginFactory {
         Ok(())
     }
 
-    pub fn build_plugin(&self, id: &str) -> Option<Box<dyn PluginInstance>> {
-        self.builders.get(id).map(|(_, b)| b.build())
-    }
-
-    pub fn build_track(
-        &self,
-        plugin_id: &str,
-        buffer_size: usize,
-    ) -> Option<olivia_core::processor::Track> {
-        let volume = 1.0;
-        self.build_plugin(plugin_id)
-            .map(|p| olivia_core::processor::Track::new(p, buffer_size, volume))
-    }
-
     pub fn metadata(&self) -> impl Iterator<Item = &'_ PluginMetadata> {
         self.builders.values().map(|(m, _)| m)
     }

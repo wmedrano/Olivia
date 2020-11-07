@@ -7,6 +7,7 @@ enum Command {
 
 #[derive(Clone, serde::Serialize)]
 pub struct PluginInstance {
+    id: usize,
     plugin_id: String,
 }
 
@@ -18,8 +19,14 @@ pub struct Track {
 }
 
 pub struct Controller {
+    // Metadata for all tracks.
     tracks: Vec<Track>,
+    // Factory containing plugin metadata as well as methods for building plugin
+    // instances.
     plugin_factory: plugin_factory::PluginFactory,
+    // Buffer size.
+    buffer_size: usize,
+    // Channel to send commands to audio processor.
     commands: crossbeam::channel::Sender<Command>,
 }
 
@@ -30,6 +37,7 @@ impl Controller {
         let controller = Controller {
             tracks: Vec::new(),
             plugin_factory,
+            buffer_size: 0,
             commands: tx,
         };
         let processor = Processor {
@@ -39,22 +47,16 @@ impl Controller {
         (controller, processor)
     }
 
-    pub fn add_track(&mut self, track_name: String, plugin_id: &str, buffer_size: usize) {
+    pub fn set_buffer_size(&mut self, buffer_size: usize) {
+        self.buffer_size = buffer_size;
+    }
+
+    pub fn add_track(&mut self, track: Track) {
         info!(
-            "Creating track \"{}\" with plugin \"{}\".",
-            track_name, plugin_id
+            "Creating track \"{}\".",
+            track.name
         );
-        let track = Track {
-            name: track_name,
-            volume: 1.0,
-            plugin_instances: vec![PluginInstance {
-                plugin_id: plugin_id.to_string(),
-            }],
-        };
-        let core_track = self
-            .plugin_factory
-            .build_track(plugin_id, buffer_size)
-            .unwrap();
+        let core_track = olivia_core::processor::Track::new(self.buffer_size, 1.0);
         self.commands.send(Command::AddTrack(core_track)).unwrap();
         self.tracks.push(track);
     }
@@ -63,8 +65,8 @@ impl Controller {
         &self.plugin_factory
     }
 
-    pub fn tracks(&self) -> &[Track] {
-        &self.tracks
+    pub fn tracks(&self) -> impl Iterator<Item=&'_ Track> {
+        self.tracks.iter()
     }
 }
 
