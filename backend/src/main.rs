@@ -31,12 +31,13 @@ async fn main() -> std::io::Result<()> {
     });
 
     info!("Creating initial track.");
-    let initial_track = controller::Track{
+    let initial_track = controller::Track {
+        id: controller::IntId(1),
         name: "Track 01".to_string(),
         volume: 1.0,
         plugin_instances: Vec::new(),
     };
-    controller.add_track(initial_track);
+    controller.add_track(initial_track).unwrap();
 
     info!("Starting actix webserver.");
     let controller = std::sync::Arc::new(std::sync::Mutex::new(Some(controller)));
@@ -55,6 +56,10 @@ async fn main() -> std::io::Result<()> {
             .route(
                 "/tracks",
                 actix_web::web::get().to(adapter::actix_server::get_tracks),
+            )
+            .route(
+                "/tracks/{track_id}",
+                actix_web::web::get().to(adapter::actix_server::get_track),
             )
     })
     .workers(1)
