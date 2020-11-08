@@ -56,7 +56,7 @@ where
         self.metadata.clone()
     }
 
-    fn build(&self) -> Box<dyn PluginInstance> {
-        Box::new(self.plugin_instance.clone())
+    fn build(&self) -> Result<Box<dyn PluginInstance>, plugin_factory::PluginBuilderError> {
+        Ok(Box::new(self.plugin_instance.clone()))
     }
 }

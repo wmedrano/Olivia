@@ -54,6 +54,18 @@ async fn main() -> std::io::Result<()> {
                 actix_web::web::get().to(adapter::actix_server::get_plugins),
             )
             .route(
+                "/plugin_instances",
+                actix_web::web::get().to(adapter::actix_server::get_plugin_instances),
+            )
+            .route(
+                "/plugin_instances/{plugin_instance_id}",
+                actix_web::web::get().to(adapter::actix_server::get_plugin_instance),
+            )
+            .route(
+                "/plugin_instances/{plugin_instance_id}",
+                actix_web::web::put().to(adapter::actix_server::put_plugin_instance),
+            )
+            .route(
                 "/tracks",
                 actix_web::web::get().to(adapter::actix_server::get_tracks),
             )
