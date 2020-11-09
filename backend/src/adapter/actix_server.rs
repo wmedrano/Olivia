@@ -1,9 +1,12 @@
 use crate::controller::{Controller, IntId};
 use std::sync::Mutex;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Error {
     TrackNotFound(IntId),
+    PluginInstanceNotFound(IntId),
+    PluginInstanceUpdateNotImplemented,
+    GenericControllerError(crate::controller::ControllerError),
 }
 
 impl std::error::Error for Error {}
@@ -18,6 +21,11 @@ impl actix_web::error::ResponseError for Error {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
             Error::TrackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
+            Error::PluginInstanceNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
+            Error::PluginInstanceUpdateNotImplemented => {
+                actix_web::http::StatusCode::NOT_IMPLEMENTED
+            }
+            Error::GenericControllerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -31,22 +39,24 @@ impl Handler {
         Handler { controller }
     }
 
-    fn plugins(&self) -> Vec<crate::plugin_factory::PluginMetadata> {
-        self.controller
-            .plugin_factory()
-            .metadata()
-            .cloned()
-            .collect()
-    }
-
     fn controller(&self) -> &Controller {
         &self.controller
+    }
+
+    fn controller_mut(&mut self) -> &mut Controller {
+        &mut self.controller
     }
 }
 
 pub async fn get_plugins(data: actix_web::web::Data<Mutex<Handler>>) -> impl actix_web::Responder {
     let handler = data.lock().unwrap();
-    actix_web::web::Json(handler.plugins())
+    let plugins: Vec<_> = handler
+        .controller()
+        .plugin_factory()
+        .metadata()
+        .cloned()
+        .collect();
+    actix_web::web::Json(plugins)
 }
 
 pub async fn get_tracks(data: actix_web::web::Data<Mutex<Handler>>) -> impl actix_web::Responder {
@@ -63,5 +73,49 @@ pub async fn get_track(
     match handler.controller().track_by_id(track_id.0) {
         Some(t) => Ok(actix_web::web::Json(t.clone())),
         None => Err(Error::TrackNotFound(track_id.0)),
+    }
+}
+
+pub async fn get_plugin_instances(
+    data: actix_web::web::Data<Mutex<Handler>>,
+) -> impl actix_web::Responder {
+    let handler = data.lock().unwrap();
+    let plugin_instances: Vec<_> = handler.controller().plugin_instances().cloned().collect();
+    actix_web::web::Json(plugin_instances)
+}
+
+pub async fn get_plugin_instance(
+    plugin_instance_id: actix_web::web::Path<IntId>,
+    data: actix_web::web::Data<Mutex<Handler>>,
+) -> impl actix_web::Responder {
+    let handler = data.lock().unwrap();
+    match handler
+        .controller()
+        .plugin_instance_by_id(plugin_instance_id.0)
+    {
+        Some(p) => Ok(actix_web::web::Json(p.clone())),
+        None => Err(Error::PluginInstanceNotFound(plugin_instance_id.0)),
+    }
+}
+
+pub async fn put_plugin_instance(
+    plugin_instance_id: actix_web::web::Path<IntId>,
+    mut plugin_instance: actix_web::web::Json<crate::controller::PluginInstance>,
+    data: actix_web::web::Data<Mutex<Handler>>,
+) -> impl actix_web::Responder {
+    let mut handler = data.lock().unwrap();
+    plugin_instance.0.id = plugin_instance_id.0;
+    if let Some(_) = handler
+        .controller
+        .plugin_instance_by_id(plugin_instance_id.0)
+    {
+        return Err(Error::PluginInstanceUpdateNotImplemented);
+    }
+    match handler
+        .controller_mut()
+        .create_plugin_instance(plugin_instance.0.clone())
+    {
+        Ok(()) => Ok(actix_web::web::Json(plugin_instance.0)),
+        Err(e) => Err(Error::GenericControllerError(e)),
     }
 }

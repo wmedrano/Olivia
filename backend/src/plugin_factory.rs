@@ -36,11 +36,20 @@ impl PluginFactory {
     pub fn metadata(&self) -> impl Iterator<Item = &'_ PluginMetadata> {
         self.builders.values().map(|(m, _)| m)
     }
+
+    pub fn build(&self, plugin_id: &str) -> Result<Box<dyn PluginInstance>, PluginBuilderError> {
+        match self.builders.get(plugin_id) {
+            Some((_, builder)) => builder.build(),
+            None => Err(PluginBuilderError::PluginDoesNotExist(
+                plugin_id.to_string(),
+            )),
+        }
+    }
 }
 
 pub trait PluginBuilder: Send {
     fn metadata(&self) -> PluginMetadata;
-    fn build(&self) -> Box<dyn PluginInstance>;
+    fn build(&self) -> Result<Box<dyn PluginInstance>, PluginBuilderError>;
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, serde::Serialize)]
@@ -90,6 +99,19 @@ pub enum PluginRegistrationError {
 impl std::error::Error for PluginRegistrationError {}
 
 impl std::fmt::Display for PluginRegistrationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum PluginBuilderError {
+    PluginDoesNotExist(String),
+}
+
+impl std::error::Error for PluginBuilderError {}
+
+impl std::fmt::Display for PluginBuilderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
