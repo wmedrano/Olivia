@@ -20,8 +20,8 @@ async fn main() -> std::io::Result<()> {
     let (mut controller, processor) = controller::Controller::new(plugin_factory);
 
     // Uncomment the backend you want to use.
-    let backend = adapter::jack::JackBackend::new(processor).unwrap();
-    // let backend = adapter::dummy_io::DummyBackend(processor);
+    // let backend = adapter::jack::JackBackend::new(processor).unwrap();
+    let backend = adapter::dummy_io::DummyBackend(processor);
     info!("Running Olivia with {} backend.", backend.name());
     controller.set_buffer_size(backend.buffer_size());
     let _process_thread = std::thread::spawn(move || {
@@ -31,11 +31,17 @@ async fn main() -> std::io::Result<()> {
     });
 
     info!("Creating initial track.");
+    controller
+        .create_plugin_instance(controller::PluginInstance {
+            id: controller::IntId(0),
+            plugin_id: "builtin_sine".to_string(),
+        })
+        .unwrap();
     let initial_track = controller::Track {
         id: controller::IntId(1),
         name: "Track 01".to_string(),
         volume: 1.0,
-        plugin_instances: Vec::new(),
+        plugin_instances: vec![controller::IntId(0)],
     };
     controller.add_track(initial_track).unwrap();
 

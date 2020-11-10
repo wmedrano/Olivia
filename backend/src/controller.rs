@@ -45,10 +45,18 @@ pub struct Controller {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ControllerError {
     BufferSizeHasNotBeenSet,
-    PluginInstancesNotYetSupported(Track),
     PluginInstanceAlreadyExists(IntId, PluginInstance),
     FailedToBuildPlugin(plugin_factory::PluginBuilderError),
     TrackAlreadyExists(IntId, Track),
+    TrackReferencesNonExistantPluginInstance {
+        track_id: IntId,
+        plugin_instance_id: IntId,
+    },
+    MovingPluginInstancesBetweenTracksNotImplemented {
+        new_track_id: IntId,
+        current_track_id: IntId,
+        plugin_instance_id: IntId,
+    },
 }
 
 impl std::error::Error for ControllerError {}
@@ -98,15 +106,38 @@ impl Controller {
             );
             return Err(ControllerError::BufferSizeHasNotBeenSet);
         }
-        if !track.plugin_instances.is_empty() {
-            error!("Failed to create track {} because plugin instances are not yet supported. Track: {:?}.", track.name, track);
-            return Err(ControllerError::PluginInstancesNotYetSupported(track));
-        }
         if let Some(t) = self.track_by_id(track.id) {
             return Err(ControllerError::TrackAlreadyExists(t.id, t.clone()));
         }
+        for plugin_instance in track.plugin_instances.iter() {
+            if self.plugin_instance_by_id(*plugin_instance).is_none() {
+                return Err(ControllerError::TrackReferencesNonExistantPluginInstance {
+                    track_id: track.id,
+                    plugin_instance_id: plugin_instance.clone(),
+                });
+            }
+            for t in self.tracks() {
+                if t.plugin_instances.contains(plugin_instance) {
+                    return Err(
+                        ControllerError::MovingPluginInstancesBetweenTracksNotImplemented {
+                            new_track_id: track.id,
+                            current_track_id: t.id,
+                            plugin_instance_id: *plugin_instance,
+                        },
+                    );
+                }
+            }
+        }
+
         info!("Creating track \"{}\".", track.name);
-        let core_track = olivia_core::processor::Track::new(self.buffer_size, 1.0);
+        let mut core_track = olivia_core::processor::Track::new(self.buffer_size, 1.0);
+        for plugin_instance in track.plugin_instances.iter() {
+            core_track.add_plugin(
+                self.unowned_plugin_instances
+                    .remove(plugin_instance)
+                    .unwrap(),
+            );
+        }
         self.commands.send(Command::AddTrack(core_track)).unwrap();
         self.tracks.push(track);
         Ok(())
