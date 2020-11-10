@@ -64,7 +64,6 @@ impl PluginInstance for Sine {
                 self.t -= 2.0 * std::f32::consts::PI;
             }
             *output = self.t.sin();
-            println!("{}", *output);
         }
         out_right.copy_from_slice(out_left);
     }

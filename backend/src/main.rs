@@ -20,8 +20,8 @@ async fn main() -> std::io::Result<()> {
     let (mut controller, processor) = controller::Controller::new(plugin_factory);
 
     // Uncomment the backend you want to use.
-    // let backend = adapter::jack::JackBackend::new(processor).unwrap();
-    let backend = adapter::dummy_io::DummyBackend(processor);
+    let backend = adapter::jack::JackBackend::new(processor).unwrap();
+    // let backend = adapter::dummy_io::DummyBackend(processor);
     info!("Running Olivia with {} backend.", backend.name());
     controller.set_buffer_size(backend.buffer_size());
     let _process_thread = std::thread::spawn(move || {
