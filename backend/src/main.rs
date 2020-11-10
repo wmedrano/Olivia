@@ -79,6 +79,10 @@ async fn main() -> std::io::Result<()> {
                 "/tracks/{track_id}",
                 actix_web::web::get().to(adapter::actix_server::get_track),
             )
+            .route(
+                "/tracks/{track_id}",
+                actix_web::web::delete().to(adapter::actix_server::delete_track),
+            )
     })
     .workers(1)
     .bind("127.0.0.1:8080")?
