@@ -10,6 +10,7 @@ pub struct IntId(pub usize);
 
 enum Command {
     AddTrack(olivia_core::processor::Track),
+    DeleteTrack(usize),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -48,6 +49,7 @@ pub enum ControllerError {
     PluginInstanceAlreadyExists(IntId, PluginInstance),
     FailedToBuildPlugin(plugin_factory::PluginBuilderError),
     TrackAlreadyExists(IntId, Track),
+    TrackDoesNotExist(IntId),
     TrackReferencesNonExistantPluginInstance {
         track_id: IntId,
         plugin_instance_id: IntId,
@@ -143,6 +145,21 @@ impl Controller {
         Ok(())
     }
 
+    pub fn delete_track(&mut self, id: IntId) -> Result<(), ControllerError> {
+        let track_index = match self.tracks.iter().enumerate().find(|(_, t)| t.id == id) {
+            Some((idx, _)) => idx,
+            None => return Err(ControllerError::TrackDoesNotExist(id)),
+        };
+        for pid in self.tracks[track_index].plugin_instances.iter() {
+            self.plugin_instances.retain(|p| p.id != *pid);
+        }
+        self.tracks.retain(|t| t.id != id);
+        self.commands
+            .send(Command::DeleteTrack(track_index))
+            .unwrap();
+        Ok(())
+    }
+
     pub fn plugin_factory(&self) -> &PluginFactory {
         &self.plugin_factory
     }
@@ -191,6 +208,7 @@ impl Processor {
         for command in self.commands.try_iter() {
             match command {
                 Command::AddTrack(t) => self.inner.add_track(t),
+                Command::DeleteTrack(track_index) => self.inner.delete_track(track_index),
             }
         }
     }

@@ -76,6 +76,21 @@ pub async fn get_track(
     }
 }
 
+pub async fn delete_track(
+    track_id: actix_web::web::Path<IntId>,
+    data: actix_web::web::Data<Mutex<Handler>>,
+) -> impl actix_web::Responder {
+    let mut handler = data.lock().unwrap();
+    if handler.controller().track_by_id(track_id.0).is_none() {
+        return Err(Error::TrackNotFound(track_id.0));
+    }
+    handler
+        .controller_mut()
+        .delete_track(track_id.0)
+        .map_err(|e| Error::GenericControllerError(e))?;
+    Ok(actix_web::web::Json(""))
+}
+
 pub async fn get_plugin_instances(
     data: actix_web::web::Data<Mutex<Handler>>,
 ) -> impl actix_web::Responder {

@@ -36,8 +36,8 @@ impl Processor {
         self.tracks.push(track);
     }
 
-    pub fn remove_track(&mut self, index: usize) {
-        self.tracks.remove(index);
+    pub fn delete_track(&mut self, track_index: usize) {
+        self.tracks.remove(track_index);
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -147,11 +147,11 @@ mod tests {
     }
 
     #[test]
-    fn tracks_are_removed() {
+    fn tracks_are_deleted() {
         let mut p = Processor::new();
         p.add_track(new_track(0.5));
         p.add_track(new_track(0.25));
-        p.remove_track(0);
+        p.delete_track(0);
 
         let mut left = [0.0; 2];
         let mut right = [0.0; 2];
