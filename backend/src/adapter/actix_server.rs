@@ -1,12 +1,14 @@
 use crate::controller::{Controller, IntId};
+use std::convert::From;
 use std::sync::Mutex;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Error {
+    GenericControllerError(crate::controller::ControllerError),
     TrackNotFound(IntId),
     PluginInstanceNotFound(IntId),
     PluginInstanceUpdateNotImplemented,
-    GenericControllerError(crate::controller::ControllerError),
+    UpdatingTrackNotImplemented,
 }
 
 impl std::error::Error for Error {}
@@ -17,15 +19,22 @@ impl std::fmt::Display for Error {
     }
 }
 
+impl From<crate::controller::ControllerError> for Error {
+    fn from(e: crate::controller::ControllerError) -> Error {
+        Error::GenericControllerError(e)
+    }
+}
+
 impl actix_web::error::ResponseError for Error {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
+            Error::GenericControllerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             Error::TrackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
             Error::PluginInstanceNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
             Error::PluginInstanceUpdateNotImplemented => {
                 actix_web::http::StatusCode::NOT_IMPLEMENTED
             }
-            Error::GenericControllerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Error::UpdatingTrackNotImplemented => actix_web::http::StatusCode::NOT_IMPLEMENTED,
         }
     }
 }
@@ -76,6 +85,20 @@ pub async fn get_track(
     }
 }
 
+pub async fn put_track(
+    track_id: actix_web::web::Path<IntId>,
+    mut track: actix_web::web::Json<crate::controller::Track>,
+    data: actix_web::web::Data<Mutex<Handler>>,
+) -> impl actix_web::Responder {
+    let mut handler = data.lock().unwrap();
+    if handler.controller().track_by_id(track_id.0).is_some() {
+        return Err(Error::UpdatingTrackNotImplemented);
+    }
+    handler.controller_mut().add_track(track.0.clone())?;
+    track.0.id = track_id.0;
+    Ok(actix_web::web::Json(track.0))
+}
+
 pub async fn delete_track(
     track_id: actix_web::web::Path<IntId>,
     data: actix_web::web::Data<Mutex<Handler>>,
@@ -84,10 +107,7 @@ pub async fn delete_track(
     if handler.controller().track_by_id(track_id.0).is_none() {
         return Err(Error::TrackNotFound(track_id.0));
     }
-    handler
-        .controller_mut()
-        .delete_track(track_id.0)
-        .map_err(|e| Error::GenericControllerError(e))?;
+    handler.controller_mut().delete_track(track_id.0)?;
     Ok(actix_web::web::Json(""))
 }
 

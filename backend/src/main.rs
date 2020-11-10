@@ -81,6 +81,10 @@ async fn main() -> std::io::Result<()> {
             )
             .route(
                 "/tracks/{track_id}",
+                actix_web::web::put().to(adapter::actix_server::put_track),
+            )
+            .route(
+                "/tracks/{track_id}",
                 actix_web::web::delete().to(adapter::actix_server::delete_track),
             )
     })

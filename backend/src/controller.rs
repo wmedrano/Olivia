@@ -19,7 +19,7 @@ pub struct PluginInstance {
     pub plugin_id: String,
 }
 
-#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Track {
     pub id: IntId,
     pub name: String,
