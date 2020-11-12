@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
     controller
         .create_plugin_instance(controller::PluginInstance {
             id: controller::IntId(0),
-            plugin_id: "lv2_http://drobilla.net/plugins/mda/EPiano".to_string(),
+            plugin_id: "bulitin_sine".to_string(),
         })
         .unwrap();
     let initial_track = controller::Track {
