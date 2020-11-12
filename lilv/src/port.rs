@@ -6,6 +6,32 @@ use lilv_sys as lib;
 use parking_lot::RwLock;
 use std::ptr::NonNull;
 
+pub struct PortsIter<'a> {
+    pub(crate) plugin: &'a Plugin,
+    pub(crate) port_index: usize,
+}
+
+impl<'a> Iterator for PortsIter<'a> {
+    type Item = Port<'a>;
+
+    fn next(&mut self) -> Option<Port<'a>> {
+        let p = self.plugin.port_by_index(self.port_index);
+        if p.is_some() {
+            self.port_index += 1;
+        }
+        p
+    }
+
+    fn count(self) -> usize {
+        self.plugin.num_ports() - self.port_index
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let count = self.plugin.num_ports() - self.port_index;
+        (count, Some(count))
+    }
+}
+
 pub struct Port<'a> {
     pub(crate) inner: RwLock<NonNull<lib::LilvPort>>,
     pub(crate) plugin: &'a Plugin,

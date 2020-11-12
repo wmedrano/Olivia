@@ -1,3 +1,4 @@
+use crate::adapter;
 use olivia_core::plugin::PluginInstance;
 use plugin_factory::PluginBuilder;
 
@@ -27,6 +28,11 @@ pub fn new_plugin_factory() -> PluginFactory {
     )) {
         warn!("Failed to register plugin: {:?}", e);
     };
+    for plugin_builder in adapter::lilv::load_plugins().drain(..) {
+        if let Err(e) = factory.register(plugin_builder) {
+            warn!("Failed to register LV2 plugin: {:?}", e);
+        };
+    }
 
     factory
 }
