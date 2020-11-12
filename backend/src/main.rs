@@ -34,13 +34,13 @@ async fn main() -> std::io::Result<()> {
     controller
         .create_plugin_instance(controller::PluginInstance {
             id: controller::IntId(0),
-            plugin_id: "builtin_sine".to_string(),
+            plugin_id: "bulitin_sine".to_string(),
         })
         .unwrap();
     let initial_track = controller::Track {
         id: controller::IntId(1),
         name: "Track 01".to_string(),
-        volume: 1.0,
+        volume: 0.5,
         plugin_instances: vec![controller::IntId(0)],
     };
     controller.add_track(initial_track).unwrap();

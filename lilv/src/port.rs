@@ -1,4 +1,4 @@
-use crate::node::Node;
+use crate::node::{Node, Value};
 use crate::nodes::Nodes;
 use crate::plugin::Plugin;
 use crate::scale_points::ScalePoints;
@@ -148,7 +148,7 @@ impl<'a> Port<'a> {
         unsafe { lib::lilv_port_is_a(plugin, port, port_class) }
     }
 
-    pub fn range(
+    pub fn range_raw(
         &self,
         default: Option<&mut Option<Node>>,
         minimum: Option<&mut Option<Node>>,
@@ -202,6 +202,49 @@ impl<'a> Port<'a> {
         }
     }
 
+    /// The range for the port.
+    pub fn range(&self) -> PortRange {
+        unsafe {
+            let mut default: *mut lib::LilvNode = std::ptr::null_mut();
+            let mut min: *mut lib::LilvNode = std::ptr::null_mut();
+            let mut max: *mut lib::LilvNode = std::ptr::null_mut();
+            lib::lilv_port_get_range(
+                self.plugin.as_ptr(),
+                self.inner.read().as_ptr(),
+                &mut default,
+                &mut min,
+                &mut max,
+            );
+            let node_to_float = |node| {
+                let non_null_node = match std::ptr::NonNull::new(node) {
+                    Some(p) => p,
+                    None => return 0.0,
+                };
+                let n = Node::new_borrowed(non_null_node, self.plugin.world.clone());
+                match n.to_value() {
+                    Value::Float(f) => f,
+                    Value::Int(i) => i as f32,
+                    v => panic!("Expected float or int but got {:?}.", v),
+                }
+            };
+            let min_val = node_to_float(min);
+            let max_val = node_to_float(max);
+            let pr = PortRange {
+                default: if default.is_null() {
+                    (min_val + max_val) / 2.0
+                } else {
+                    node_to_float(default)
+                },
+                min: min_val,
+                max: max_val,
+            };
+            lib::lilv_free(default as *mut std::ffi::c_void);
+            lib::lilv_free(min as *mut std::ffi::c_void);
+            lib::lilv_free(max as *mut std::ffi::c_void);
+            pr
+        }
+    }
+
     pub fn scale_points(&self) -> Option<ScalePoints> {
         let plugin = self.plugin.inner.read().as_ptr();
         let port = self.inner.read().as_ptr();
@@ -211,4 +254,12 @@ impl<'a> Port<'a> {
             self,
         ))
     }
+}
+
+/// The range of allowed values for a port.
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct PortRange {
+    pub default: f32,
+    pub min: f32,
+    pub max: f32,
 }

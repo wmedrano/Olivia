@@ -1,6 +1,5 @@
 use crate::plugin::PluginInstance;
 use crate::TimedMidi;
-use wmidi;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Silence;

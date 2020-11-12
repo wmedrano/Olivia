@@ -335,4 +335,8 @@ impl Plugin {
             )))?,
         })
     }
+
+    pub fn as_ptr(&self) -> *const lib::LilvPlugin {
+        self.inner.read().as_ptr()
+    }
 }
