@@ -38,6 +38,25 @@ impl Node {
         }
     }
 
+    /// The value within the node as an enum.
+    pub fn to_value(&self) -> Value<'_> {
+        if let Some(f) = self.as_f32() {
+            Value::Float(f)
+        } else if let Some(i) = self.as_i32() {
+            Value::Int(i)
+        } else if let Some(uri) = self.as_uri() {
+            Value::Uri(uri)
+        } else if let Some(blank) = self.as_blank() {
+            Value::Blank(blank)
+        } else if let Some(s) = self.as_str() {
+            Value::Str(s)
+        } else if let Some(b) = self.as_bool() {
+            Value::Bool(b)
+        } else {
+            Value::Unknown
+        }
+    }
+
     /// Returns this value as a Turtle/SPARQL token.
     pub fn turtle_token(&self) -> String {
         let node = self.inner.read().as_ptr();
@@ -120,24 +139,24 @@ impl Node {
         }
     }
 
-    pub fn is_float(&self) -> bool {
+    pub fn is_f32(&self) -> bool {
         unsafe { lib::lilv_node_is_float(self.inner.read().as_ptr()) }
     }
 
-    pub fn as_float(&self) -> Option<f32> {
-        if self.is_float() {
+    pub fn as_f32(&self) -> Option<f32> {
+        if self.is_f32() {
             Some(unsafe { lib::lilv_node_as_float(self.inner.read().as_ptr()) })
         } else {
             None
         }
     }
 
-    pub fn is_int(&self) -> bool {
+    pub fn is_i32(&self) -> bool {
         unsafe { lib::lilv_node_is_int(self.inner.read().as_ptr()) }
     }
 
-    pub fn as_int(&self) -> Option<i32> {
-        if self.is_int() {
+    pub fn as_i32(&self) -> Option<i32> {
+        if self.is_i32() {
             Some(unsafe { lib::lilv_node_as_int(self.inner.read().as_ptr()) })
         } else {
             None
@@ -188,4 +207,15 @@ impl Drop for Node {
             unsafe { lib::lilv_node_free(self.inner.write().as_ptr()) }
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value<'a> {
+    Uri(&'a str),
+    Blank(&'a str),
+    Str(&'a str),
+    Float(f32),
+    Int(i32),
+    Bool(bool),
+    Unknown,
 }

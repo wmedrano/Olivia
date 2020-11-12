@@ -3,5 +3,6 @@
 members = [
     "backend",
     "core",
+    "devtools/j2sdl2",
     "lilv",
 ]
