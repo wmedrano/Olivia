@@ -2,7 +2,7 @@ use crate::instance::Instance;
 use crate::node::Node;
 use crate::nodes::Nodes;
 use crate::plugin_class::PluginClass;
-use crate::port::Port;
+use crate::port::{Port, PortsIter};
 use crate::uis::UIs;
 use crate::world::InnerWorld;
 use lilv_sys as lib;
@@ -145,6 +145,13 @@ impl Plugin {
             NonNull::new(unsafe { lib::lilv_plugin_get_extension_data(plugin) })?,
             self.world.clone(),
         ))
+    }
+
+    pub fn ports(&self) -> PortsIter<'_> {
+        PortsIter {
+            plugin: self,
+            port_index: 0,
+        }
     }
 
     pub fn num_ports(&self) -> usize {

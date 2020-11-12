@@ -60,27 +60,14 @@ pub struct PluginMetadata {
 
 impl PluginMetadata {
     pub fn validate(&self) -> Result<(), MetadataError> {
-        if self.id.chars().any(|c| c.is_ascii_uppercase()) {
-            return Err(MetadataError::IdContainsUpperCase(self.id.clone()));
-        }
-        if !self
-            .id
-            .chars()
-            .any(|c| c.is_ascii_alphanumeric() || c == '_')
-        {
-            return Err(MetadataError::IdContainsNonAlphaNumericOrUnderscore(
-                self.id.clone(),
-            ));
-        }
+        // TODO(wmedrano): Do proper checks once LV2 plugins are registered
+        // with proper IDs.
         Ok(())
     }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum MetadataError {
-    IdContainsUpperCase(String),
-    IdContainsNonAlphaNumericOrUnderscore(String),
-}
+pub enum MetadataError {}
 
 impl std::error::Error for MetadataError {}
 
@@ -107,6 +94,7 @@ impl std::fmt::Display for PluginRegistrationError {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum PluginBuilderError {
     PluginDoesNotExist(String),
+    GenericError(&'static str),
 }
 
 impl std::error::Error for PluginBuilderError {}

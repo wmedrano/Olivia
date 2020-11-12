@@ -117,6 +117,14 @@ impl Instance {
     }
 }
 
+impl std::fmt::Debug for Instance {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LV2Instance")
+            .field("uri", &self.uri().unwrap_or("ERROR_URI_NOT_FOUND"))
+            .finish()
+    }
+}
+
 impl Drop for Instance {
     fn drop(&mut self) {
         unsafe { lib::lilv_instance_free(self.inner.as_ptr() as _) };
