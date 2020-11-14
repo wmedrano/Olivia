@@ -1,4 +1,5 @@
 use crate::plugin_factory::{PluginBuilder, PluginBuilderError, PluginMetadata};
+use sha3::Digest;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
@@ -52,7 +53,7 @@ pub fn load_plugins() -> Vec<Lv2PluginBuilder> {
         }
         let metadata = PluginMetadata {
             // TODO(wmedrano): Fix the URI.
-            id: format!("lv2_{}", plugin.uri().as_uri().unwrap()),
+            id: create_id(plugin.uri().as_uri().unwrap()),
             display_name: plugin
                 .name()
                 .as_str()
@@ -477,5 +478,27 @@ impl UridMapFeatureNativeImpl {
         info!("Mapped URI {:?} to {}.", uri, id);
         map.insert(CString::from(uri), id);
         id
+    }
+}
+
+fn create_id(uri: &str) -> String {
+    let mut hasher = sha3::Sha3_256::default();
+    hasher.update(uri);
+    let hash = hasher.finalize();
+    format!("lv2_{}", hex::encode(hash.as_slice()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_id_is_stable() {
+        assert_eq!(
+            create_id("http://drobilla.net/plugins/mda/EPiano"),
+            // MDA EPiano should always map to this value. If it doesn't than
+            // saves won't be possible.
+            "lv2_ec91337841c3308d790e6387353f5690835925f1230b8471682856e1733625d8",
+        );
     }
 }
