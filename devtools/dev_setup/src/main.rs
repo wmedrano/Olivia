@@ -1,3 +1,14 @@
+fn main() {
+    std::thread::spawn(|| run_playback());
+    // Introduce a time buffer to avoid printing out too much debug info to
+    // stdout.
+    std::thread::sleep(std::time::Duration::from_secs(1));
+
+    run_midi();
+}
+
+fn run_midi() {}
+
 // Wraps an sdl2 audio queue with Send support.
 struct AudioQueueWrapper(sdl2::audio::AudioQueue<f32>);
 
@@ -7,18 +18,8 @@ struct AudioQueueWrapper(sdl2::audio::AudioQueue<f32>);
 // TODO: find a way to implement this without unsafe.
 unsafe impl Send for AudioQueueWrapper {}
 
-fn main() {
-    run_playback();
-}
-
 fn run_playback() {
-    let (client, status) =
-        jack::Client::new("olivia_dev_playback", jack::ClientOptions::NO_START_SERVER).unwrap();
-    println!(
-        "Started olivia_dev client {} with status {:?}.",
-        client.name(),
-        status
-    );
+    let client = new_client("olivia_dev_playback").unwrap();
 
     let sdl_context = sdl2::init().unwrap();
     let sdl_audio = sdl_context.audio().unwrap();
@@ -66,4 +67,14 @@ fn run_playback() {
     let active_client = client.activate_async((), process).unwrap();
     std::thread::park();
     active_client.deactivate().unwrap();
+}
+
+fn new_client(name: &str) -> Result<jack::Client, jack::Error> {
+    let (client, status) = jack::Client::new(name, jack::ClientOptions::NO_START_SERVER)?;
+    println!(
+        "Started olivia_dev client {} with status {:?}.",
+        client.name(),
+        status
+    );
+    Ok(client)
 }
