@@ -482,10 +482,8 @@ impl UridMapFeatureNativeImpl {
 }
 
 fn create_id(uri: &str) -> String {
-    let mut hasher = sha3::Sha3_256::default();
-    hasher.update(uri);
-    let hash = hasher.finalize();
-    format!("lv2_{}", hex::encode(hash.as_slice()))
+    let hash = hex::encode(sha3::Sha3_256::digest(uri.as_bytes()));
+    format!("lv2_{}", hash)
 }
 
 #[cfg(test)]
