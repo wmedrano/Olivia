@@ -190,7 +190,6 @@ impl olivia_core::plugin::PluginInstance for LV2PluginInstance {
                     .connect_port(port_index, self.midi_buffer.as_mut_ptr())
             };
         }
-        info!("About to run.");
         self.instance.run(samples);
     }
 }
