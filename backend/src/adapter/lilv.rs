@@ -496,8 +496,6 @@ mod tests {
     fn create_id_is_stable() {
         assert_eq!(
             create_id("http://drobilla.net/plugins/mda/EPiano"),
-            // MDA EPiano should always map to this value. If it doesn't than
-            // saves won't be possible.
             "lv2_ec91337841c3308d790e6387353f5690835925f1230b8471682856e1733625d8",
         );
     }
