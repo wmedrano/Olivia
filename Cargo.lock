@@ -580,7 +580,6 @@ dependencies = [
  "lazy_static",
  "portmidi",
  "sdl2",
- "wmidi",
 ]
 
 [[package]]
