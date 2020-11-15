@@ -15,8 +15,6 @@ fn main() {
     println!("Starting olivia backend.");
     let mut backend = std::process::Command::new("cargo")
         .env("RUST_LOG", "INFO")
-        .stdout(std::process::Stdio::inherit())
-        .stderr(std::process::Stdio::inherit())
         .args(&["run", "--bin", "olivia_backend"])
         .spawn()
         .unwrap();
