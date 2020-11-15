@@ -1,3 +1,10 @@
+// Name of the JACK client that will playback audio.
+pub const CLIENT_NAME: &'static str = "olivia_dev_playback";
+
+// Name of input ports that will be rerouted to output audio to the default
+// playback device.
+pub const PLAYBACK_PORTS: [&'static str; 2] = ["playback_1", "playback_2"];
+
 // Wraps an sdl2 audio queue with Send support.
 struct AudioQueueWrapper(sdl2::audio::AudioQueue<f32>);
 
@@ -9,7 +16,7 @@ unsafe impl Send for AudioQueueWrapper {}
 
 pub fn run() {
     let (client, status) =
-        jack::Client::new("olivia_dev_playback", jack::ClientOptions::NO_START_SERVER).unwrap();
+        jack::Client::new(CLIENT_NAME, jack::ClientOptions::NO_START_SERVER).unwrap();
     println!(
         "Started olivia_dev client {} with status {:?}.",
         client.name(),
@@ -26,14 +33,10 @@ pub fn run() {
     let queue = AudioQueueWrapper(sdl_audio.open_queue(None, &spec).unwrap());
     queue.0.resume();
 
-    let inputs = [
-        client
-            .register_port("playback_1", jack::AudioIn::default())
-            .unwrap(),
-        client
-            .register_port("playback_2", jack::AudioIn::default())
-            .unwrap(),
-    ];
+    let inputs: Vec<_> = PLAYBACK_PORTS
+        .iter()
+        .map(|n| client.register_port(n, jack::AudioIn::default()).unwrap())
+        .collect();
     for i in inputs.iter() {
         println!(
             "Registered audio output port {}.",
