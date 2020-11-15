@@ -4,7 +4,14 @@ mod playback;
 use jack::PortSpec;
 
 fn main() {
-    std::thread::spawn(|| run_server());
+    let mut server = run_server();
+    ctrlc::set_handler(move || {
+        let script_terminated_by_ctrl_c_code = 130;
+        println!("Kill server.");
+        server.kill().unwrap();
+        std::process::exit(script_terminated_by_ctrl_c_code);
+    })
+    .unwrap();
     std::thread::sleep(std::time::Duration::from_millis(500));
 
     std::thread::spawn(|| playback::run());
@@ -52,17 +59,11 @@ fn main() {
     }
 }
 
-fn run_server() {
-    println!("Killing JACK servers.");
-    std::process::Command::new("pkill")
-        .args(&["jackd"])
-        .output()
-        .unwrap();
+fn run_server() -> std::process::Child {
     std::thread::sleep(std::time::Duration::from_millis(200));
     println!("Starting dummy server.");
     std::process::Command::new("jackd")
         .args(&["-ddummy", "-r44100", "-p2048"])
-        .output()
-        .unwrap();
-    panic!("JACK server terminated unexpectedly.");
+        .spawn()
+        .unwrap()
 }
