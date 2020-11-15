@@ -4,5 +4,6 @@ members = [
     "backend",
     "core",
     "devtools/dev_setup",
+    "devtools/dev_setup_integration_test",
     "lilv",
 ]

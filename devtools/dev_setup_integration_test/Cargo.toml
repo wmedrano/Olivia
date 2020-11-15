@@ -1,5 +1,5 @@
 [package]
-name = "dev_setup"
+name = "dev_setup_integration_test"
 version = "0.1.0"
 authors = ["Will <will.s.medrano@gmail.com>"]
 edition = "2018"
@@ -7,8 +7,4 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ctrlc = "3.1"
 jack = "0.6"
-lazy_static = "1.4"
-portmidi = "0.2"
-sdl2 = "0.34"

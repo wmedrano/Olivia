@@ -4,14 +4,13 @@ lazy_static! {
     static ref PORT_MIDI: portmidi::PortMidi = portmidi::PortMidi::new().unwrap();
 }
 
+pub const CLIENT_NAME: &'static str = "olivia_dev_midi_input";
+
 // run starts up a JACK client that passes through information from JACK
 // devices.
 pub fn run() {
-    let (client, status) = jack::Client::new(
-        "olivia_dev_midi_input",
-        jack::ClientOptions::NO_START_SERVER,
-    )
-    .unwrap();
+    let (client, status) =
+        jack::Client::new(CLIENT_NAME, jack::ClientOptions::NO_START_SERVER).unwrap();
     println!(
         "Started olivia_dev client {} with status {:?}.",
         client.name(),
