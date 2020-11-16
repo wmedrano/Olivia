@@ -60,9 +60,11 @@ impl CollectionTrait for Nodes {
         lib::lilv_nodes_free
     }
 
-    fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
+    /// # Safety
+    /// i will be dereferenced.
+    unsafe fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
         Node::new_borrowed(
-            NonNull::new(unsafe { Self::get_fn()(self.inner(), i) as _ }).unwrap(),
+            NonNull::new(Self::get_fn()(self.inner(), i) as _).unwrap(),
             self.owner.clone(),
         )
     }

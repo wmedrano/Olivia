@@ -54,9 +54,9 @@ impl CollectionTrait for PluginClasses {
         lib::lilv_plugin_classes_free
     }
 
-    fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
+    unsafe fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
         PluginClass::new_borrowed(
-            NonNull::new(unsafe { Self::get_fn()(self.inner(), i) as _ }).unwrap(),
+            NonNull::new(Self::get_fn()(self.inner(), i) as _).unwrap(),
             self.owner.clone(),
         )
     }

@@ -7,6 +7,7 @@ fn main() {
 
     println!("Starting dev_setup.");
     let mut dev_setup = std::process::Command::new("cargo")
+        .env("RUST_LOG", "INFO")
         .args(&["run", "--bin", "dev_setup"])
         .spawn()
         .unwrap();
@@ -18,7 +19,7 @@ fn main() {
         .args(&["run", "--bin", "olivia_backend"])
         .spawn()
         .unwrap();
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    std::thread::sleep(std::time::Duration::from_secs(20));
 
     println!("Creating integration test JACK client.");
     let (client, _) = jack::Client::new(
@@ -26,10 +27,12 @@ fn main() {
         jack::ClientOptions::NO_START_SERVER,
     )
     .unwrap();
+    std::thread::sleep(std::time::Duration::from_secs(1));
     for port in client.ports(None, None, jack::PortFlags::empty()).iter() {
         println!("Found port {}.", port);
     }
 
+    std::thread::sleep(std::time::Duration::from_secs(1));
     println!("Midi can't be tested over CI so assuming that it works well.");
     let olivia_outputs = [
         client.port_by_name("olivia:output_l").unwrap(),
@@ -44,16 +47,15 @@ fn main() {
             .unwrap(),
     ];
     for (i, o) in olivia_outputs.iter().zip(dev_playback.iter()) {
-        println!(
-            "Testing that {} is connected to {}.",
-            i.name().unwrap(),
-            o.name().unwrap()
-        );
+        let i_name = i.name().unwrap();
+        let o_name = o.name().unwrap();
+        println!("Testing that {} is connected to {}.", i_name, o_name);
         let is_connected = i.is_connected_to(o.name().unwrap().as_str()).unwrap();
         assert!(is_connected);
     }
 
-    println!("Tests completed OK!");
-    dev_setup.kill().ok();
     backend.kill().ok();
+    drop(client);
+    dev_setup.kill().ok();
+    println!("Tests completed OK!");
 }

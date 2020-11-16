@@ -14,10 +14,10 @@ fn main() {
     .unwrap();
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    std::thread::spawn(|| playback::run());
+    std::thread::spawn(playback::run);
     std::thread::sleep(std::time::Duration::from_millis(200));
 
-    std::thread::spawn(|| midi::run());
+    std::thread::spawn(midi::run);
     std::thread::sleep(std::time::Duration::from_millis(200));
 
     let port_connector = jack::Client::new(
@@ -33,12 +33,14 @@ fn main() {
         .iter()
         .map(|p| format!("{}:{}", playback::CLIENT_NAME, p))
         .collect();
-    let do_connect = || {
+    let connect_playback = || {
         for (a, b) in backend_outputs.iter().zip(playback_outputs.iter()) {
             if let Err(e) = port_connector.connect_ports_by_name(a, b) {
                 format!("Error connecting olivia backend to dev playback: {:?}", e);
             };
         }
+    };
+    let connect_midi = || {
         let midi_output_ports = port_connector.ports(
             Some(&midi_outputs_regexp),
             Some(jack::MidiOut::default().jack_port_type()),
@@ -53,17 +55,19 @@ fn main() {
     loop {
         let olivia_backend_is_running = port_connector.port_by_name("olivia:midi_input").is_some();
         if olivia_backend_is_running {
-            do_connect();
+            connect_playback();
+            connect_midi();
+        } else {
+            println!("Could not find a running instance of olivia_backend.");
         }
         std::thread::sleep(std::time::Duration::from_secs(2));
     }
 }
 
 fn run_server() -> std::process::Child {
-    std::thread::sleep(std::time::Duration::from_millis(200));
     println!("Starting dummy server.");
     std::process::Command::new("jackd")
-        .args(&["-ddummy", "-r44100", "-p2048"])
+        .args(&["-r", "-ddummy", "-r44100", "-p2048"])
         .spawn()
         .unwrap()
 }

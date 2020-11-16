@@ -115,7 +115,7 @@ impl Controller {
             if self.plugin_instance_by_id(*plugin_instance).is_none() {
                 return Err(ControllerError::TrackReferencesNonExistantPluginInstance {
                     track_id: track.id,
-                    plugin_instance_id: plugin_instance.clone(),
+                    plugin_instance_id: *plugin_instance,
                 });
             }
             for t in self.tracks() {
@@ -185,9 +185,9 @@ impl Controller {
         let plugin_instance = self
             .plugin_factory
             .build(&metadata.plugin_id)
-            .map_err(|e| ControllerError::FailedToBuildPlugin(e))?;
+            .map_err(ControllerError::FailedToBuildPlugin)?;
         self.unowned_plugin_instances
-            .insert(metadata.id.clone(), plugin_instance);
+            .insert(metadata.id, plugin_instance);
         self.plugin_instances.push(metadata);
         Ok(())
     }

@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Error {
-    GenericControllerError(crate::controller::ControllerError),
+    GenericController(crate::controller::ControllerError),
     TrackNotFound(IntId),
     PluginInstanceNotFound(IntId),
     PluginInstanceUpdateNotImplemented,
@@ -21,14 +21,14 @@ impl std::fmt::Display for Error {
 
 impl From<crate::controller::ControllerError> for Error {
     fn from(e: crate::controller::ControllerError) -> Error {
-        Error::GenericControllerError(e)
+        Error::GenericController(e)
     }
 }
 
 impl actix_web::error::ResponseError for Error {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            Error::GenericControllerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Error::GenericController(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             Error::TrackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
             Error::PluginInstanceNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
             Error::PluginInstanceUpdateNotImplemented => {
@@ -140,9 +140,10 @@ pub async fn put_plugin_instance(
 ) -> impl actix_web::Responder {
     let mut handler = data.lock().unwrap();
     plugin_instance.0.id = plugin_instance_id.0;
-    if let Some(_) = handler
+    if handler
         .controller
         .plugin_instance_by_id(plugin_instance_id.0)
+        .is_some()
     {
         return Err(Error::PluginInstanceUpdateNotImplemented);
     }
@@ -151,6 +152,6 @@ pub async fn put_plugin_instance(
         .create_plugin_instance(plugin_instance.0.clone())
     {
         Ok(()) => Ok(actix_web::web::Json(plugin_instance.0)),
-        Err(e) => Err(Error::GenericControllerError(e)),
+        Err(e) => Err(Error::GenericController(e)),
     }
 }

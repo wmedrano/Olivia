@@ -4,7 +4,7 @@ lazy_static! {
     static ref PORT_MIDI: portmidi::PortMidi = portmidi::PortMidi::new().unwrap();
 }
 
-pub const CLIENT_NAME: &'static str = "olivia_dev_midi_input";
+pub const CLIENT_NAME: &str = "olivia_dev_midi_input";
 
 // run starts up a JACK client that passes through information from JACK
 // devices.
@@ -41,29 +41,24 @@ pub fn run() {
             let inputs = inputs.iter_mut();
             let outputs = outputs.iter_mut().map(|p| p.writer(ps));
             for (input_port, mut output_port) in inputs.zip(outputs) {
-                loop {
-                    match input_port.read() {
-                        Ok(Some(m)) => {
-                            let bytes = [
-                                m.message.status,
-                                m.message.data1,
-                                m.message.data2,
-                                m.message.data3,
-                            ];
-                            let raw_midi = jack::RawMidi {
-                                time: 0,
-                                bytes: &bytes,
-                            };
-                            output_port.write(&raw_midi).unwrap();
-                        }
-                        _ => break,
-                    }
+                while let Ok(Some(m)) = input_port.read() {
+                    let bytes = [
+                        m.message.status,
+                        m.message.data1,
+                        m.message.data2,
+                        m.message.data3,
+                    ];
+                    let raw_midi = jack::RawMidi {
+                        time: 0,
+                        bytes: &bytes,
+                    };
+                    output_port.write(&raw_midi).unwrap();
+                    let raw_midi = jack::RawMidi {
+                        time: 0,
+                        bytes: &[],
+                    };
+                    output_port.write(&raw_midi).unwrap();
                 }
-                let raw_midi = jack::RawMidi {
-                    time: 0,
-                    bytes: &[],
-                };
-                output_port.write(&raw_midi).unwrap();
             }
             jack::Control::Continue
         },
