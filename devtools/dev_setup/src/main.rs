@@ -65,7 +65,6 @@ fn main() {
 }
 
 fn run_server() -> std::process::Child {
-    std::thread::sleep(std::time::Duration::from_millis(200));
     println!("Starting dummy server.");
     std::process::Command::new("jackd")
         .args(&["-r", "-ddummy", "-r44100", "-p2048"])
