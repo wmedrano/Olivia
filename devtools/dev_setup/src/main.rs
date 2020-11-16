@@ -54,6 +54,8 @@ fn main() {
         let olivia_backend_is_running = port_connector.port_by_name("olivia:midi_input").is_some();
         if olivia_backend_is_running {
             do_connect();
+        } else {
+            println!("Could not find a running instance of olivia_backend.");
         }
         std::thread::sleep(std::time::Duration::from_secs(2));
     }
