@@ -27,10 +27,12 @@ fn main() {
         jack::ClientOptions::NO_START_SERVER,
     )
     .unwrap();
+    std::thread::sleep(std::time::Duration::from_secs(1));
     for port in client.ports(None, None, jack::PortFlags::empty()).iter() {
         println!("Found port {}.", port);
     }
 
+    std::thread::sleep(std::time::Duration::from_secs(1));
     println!("Midi can't be tested over CI so assuming that it works well.");
     let olivia_outputs = [
         client.port_by_name("olivia:output_l").unwrap(),
@@ -52,7 +54,8 @@ fn main() {
         assert!(is_connected);
     }
 
-    println!("Tests completed OK!");
-    dev_setup.kill().ok();
     backend.kill().ok();
+    drop(client);
+    dev_setup.kill().ok();
+    println!("Tests completed OK!");
 }
