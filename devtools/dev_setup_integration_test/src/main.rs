@@ -7,6 +7,7 @@ fn main() {
 
     println!("Starting dev_setup.");
     let mut dev_setup = std::process::Command::new("cargo")
+        .env("RUST_LOG", "INFO")
         .args(&["run", "--bin", "dev_setup"])
         .spawn()
         .unwrap();
@@ -44,11 +45,9 @@ fn main() {
             .unwrap(),
     ];
     for (i, o) in olivia_outputs.iter().zip(dev_playback.iter()) {
-        println!(
-            "Testing that {} is connected to {}.",
-            i.name().unwrap(),
-            o.name().unwrap()
-        );
+        let i_name = i.name().unwrap();
+        let o_name = o.name().unwrap();
+        println!("Testing that {} is connected to {}.", i_name, o_name);
         let is_connected = i.is_connected_to(o.name().unwrap().as_str()).unwrap();
         assert!(is_connected);
     }

@@ -6,7 +6,28 @@ pub const CLIENT_NAME: &'static str = "olivia_dev_playback";
 pub const PLAYBACK_PORTS: [&'static str; 2] = ["playback_1", "playback_2"];
 
 // Wraps an sdl2 audio queue with Send support.
-struct AudioQueueWrapper(sdl2::audio::AudioQueue<f32>);
+enum AudioQueueWrapper {
+    Sdl(sdl2::audio::AudioQueue<f32>),
+    Dummy,
+}
+
+impl AudioQueueWrapper {
+    fn new(q: sdl2::audio::AudioQueue<f32>) -> AudioQueueWrapper {
+        q.resume();
+        AudioQueueWrapper::Sdl(q)
+    }
+
+    fn dummy() -> AudioQueueWrapper {
+        AudioQueueWrapper::Dummy
+    }
+
+    fn queue(&mut self, audio: &[f32]) -> bool {
+        match self {
+            AudioQueueWrapper::Sdl(q) => q.queue(audio),
+            AudioQueueWrapper::Dummy => true,
+        }
+    }
+}
 
 // We implement Send to use the audio queue in the process Jack thread.
 // This is technically unsafe since JACK requires a callback to have a static
@@ -30,8 +51,14 @@ pub fn run() {
         channels: Some(2),
         samples: Some(client.buffer_size() as u16),
     };
-    let queue = AudioQueueWrapper(sdl_audio.open_queue(None, &spec).unwrap());
-    queue.0.resume();
+    let mut queue = match sdl_audio.open_queue(None, &spec) {
+        Ok(q) => AudioQueueWrapper::new(q),
+        Err(e) => {
+            println!("Could not open audio device with sdl2: {:?}", e);
+            println!("Playback will not be supported.");
+            AudioQueueWrapper::dummy()
+        }
+    };
 
     let inputs: Vec<_> = PLAYBACK_PORTS
         .iter()
@@ -53,7 +80,7 @@ pub fn run() {
                 temp_buffer.push(*l);
                 temp_buffer.push(*r);
             }
-            if !queue.0.queue(&temp_buffer) {
+            if !queue.queue(&temp_buffer) {
                 println!("Could not write to SDL2 audio output. Writing operation will cease.");
                 jack::Control::Quit
             } else {
