@@ -33,12 +33,14 @@ fn main() {
         .iter()
         .map(|p| format!("{}:{}", playback::CLIENT_NAME, p))
         .collect();
-    let do_connect = || {
+    let connect_playback = || {
         for (a, b) in backend_outputs.iter().zip(playback_outputs.iter()) {
             if let Err(e) = port_connector.connect_ports_by_name(a, b) {
                 format!("Error connecting olivia backend to dev playback: {:?}", e);
             };
         }
+    };
+    let connect_midi = || {
         let midi_output_ports = port_connector.ports(
             Some(&midi_outputs_regexp),
             Some(jack::MidiOut::default().jack_port_type()),
@@ -53,7 +55,8 @@ fn main() {
     loop {
         let olivia_backend_is_running = port_connector.port_by_name("olivia:midi_input").is_some();
         if olivia_backend_is_running {
-            do_connect();
+            connect_playback();
+            connect_midi();
         } else {
             println!("Could not find a running instance of olivia_backend.");
         }
