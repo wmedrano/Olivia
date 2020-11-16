@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Dependencies
         run: sudo apt-get install jackd libjack0 libjack-dev liblilv-0-0 liblilv-dev  libsdl2-2.0-0 libsdl2-dev libportmidi0 libportmidi-dev
       - name: Build
