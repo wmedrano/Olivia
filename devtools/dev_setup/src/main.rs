@@ -14,10 +14,10 @@ fn main() {
     .unwrap();
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    std::thread::spawn(|| playback::run());
+    std::thread::spawn(playback::run);
     std::thread::sleep(std::time::Duration::from_millis(200));
 
-    std::thread::spawn(|| midi::run());
+    std::thread::spawn(midi::run);
     std::thread::sleep(std::time::Duration::from_millis(200));
 
     let port_connector = jack::Client::new(

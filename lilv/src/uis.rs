@@ -53,9 +53,9 @@ impl<'a> CollectionTrait for UIs<'a> {
         lib::lilv_uis_free
     }
 
-    fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
+    unsafe fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
         UI::new_borrowed(
-            NonNull::new(unsafe { Self::get_fn()(self.inner(), i) as _ }).unwrap(),
+            NonNull::new(Self::get_fn()(self.inner(), i) as _).unwrap(),
             self.owner,
         )
     }

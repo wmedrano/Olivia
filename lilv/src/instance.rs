@@ -66,7 +66,7 @@ impl InstanceImpl {
 
     #[inline(always)]
     pub fn descriptor(&self) -> &LV2Descriptor {
-        unsafe { std::mem::transmute(self.descriptor) }
+        unsafe { &*self.descriptor }
     }
 
     #[inline(always)]
@@ -82,6 +82,10 @@ impl Instance {
     }
 
     #[inline(always)]
+    /// Connect data to the port.
+    ///
+    /// # Safety
+    /// The LV2 plugin may dereference data and use it as it pleases.
     pub unsafe fn connect_port<T>(&mut self, port_index: usize, data: *mut T) {
         self.inner.as_mut().connect_port(port_index, data)
     }
@@ -101,6 +105,10 @@ impl Instance {
         unsafe { self.inner.as_mut().deactivate() }
     }
 
+    /// Return additional plugin data defined by some extension.
+    ///
+    /// # Safety
+    /// This calls the plugins extension_data callback which may be unsafe.
     #[inline(always)]
     pub unsafe fn extension_data<T>(&self, uri: &str) -> Option<NonNull<T>> {
         self.inner.as_ref().extension_data(uri)

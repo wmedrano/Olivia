@@ -57,8 +57,8 @@ pub fn load_plugins() -> Vec<Lv2PluginBuilder> {
             display_name: plugin
                 .name()
                 .as_str()
-                .unwrap_or(plugin.uri().as_uri().unwrap())
-                .to_string(),
+                .map(str::to_string)
+                .unwrap_or_else(|| plugin.uri().as_uri().unwrap().to_string()),
         };
         let builder = Lv2PluginBuilder {
             lv2_resources: lv2_resources.clone(),

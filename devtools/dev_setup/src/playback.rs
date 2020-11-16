@@ -1,9 +1,9 @@
 // Name of the JACK client that will playback audio.
-pub const CLIENT_NAME: &'static str = "olivia_dev_playback";
+pub const CLIENT_NAME: &str = "olivia_dev_playback";
 
 // Name of input ports that will be rerouted to output audio to the default
 // playback device.
-pub const PLAYBACK_PORTS: [&'static str; 2] = ["playback_1", "playback_2"];
+pub const PLAYBACK_PORTS: [&str; 2] = ["playback_1", "playback_2"];
 
 // Wraps an sdl2 audio queue with Send support.
 enum AudioQueueWrapper {
@@ -67,7 +67,8 @@ pub fn run() {
     for i in inputs.iter() {
         println!(
             "Registered audio output port {}.",
-            i.name().unwrap_or("ERROR_GETTING_PORT_NAME".to_string())
+            i.name()
+                .unwrap_or_else(|_| "ERROR_GETTING_PORT_NAME".to_string())
         );
     }
     let mut temp_buffer: Vec<f32> = Vec::with_capacity(2 * 44100);

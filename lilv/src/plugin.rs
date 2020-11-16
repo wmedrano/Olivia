@@ -1,4 +1,4 @@
-use crate::instance::Instance;
+use crate::instance::{Instance, InstanceImpl};
 use crate::node::Node;
 use crate::nodes::Nodes;
 use crate::plugin_class::PluginClass;
@@ -200,7 +200,7 @@ impl Plugin {
     pub fn num_ports_of_class(&self, classes: &[&Node]) -> usize {
         (0..self.num_ports())
             .filter_map(|index| self.port_by_index(index))
-            .map(|port| classes.iter().all(|cls| port.is_a(cls)))
+            .filter(|port| classes.iter().all(|cls| port.is_a(cls)))
             .count()
     }
 
@@ -320,6 +320,8 @@ impl Plugin {
         ))
     }
 
+    /// # Safety
+    /// May call unsafe ffi code from LV2 plugin.
     pub unsafe fn instantiate(
         &self,
         sample_rate: f64,
@@ -328,11 +330,11 @@ impl Plugin {
         let plugin = self.inner.read().as_ptr();
 
         Some(Instance {
-            inner: NonNull::new(std::mem::transmute(lib::lilv_plugin_instantiate(
+            inner: NonNull::new(lib::lilv_plugin_instantiate(
                 plugin,
                 sample_rate,
                 std::mem::transmute(features),
-            )))?,
+            ) as *mut InstanceImpl)?,
         })
     }
 

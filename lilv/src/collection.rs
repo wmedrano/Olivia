@@ -60,13 +60,17 @@ pub trait CollectionTrait: Sized {
     type Target;
     type Owner;
 
+    /// # Safety
+    /// The returned pointer may be dereferenced and passed into ffi libraries.
     unsafe fn inner(&self) -> *const Self::Inner;
     fn begin_fn() -> BeginFn<Self>;
     fn is_end_fn() -> IsEndFn<Self>;
     fn get_fn() -> GetFn<Self>;
     fn next_fn() -> NextFn<Self>;
     fn free_fn() -> FreeFn<Self>;
-    fn get(&self, i: *mut lib::LilvIter) -> Self::Target;
+    /// # Safety
+    /// The caller may dereference i.
+    unsafe fn get(&self, i: *mut lib::LilvIter) -> Self::Target;
 }
 
 pub(crate) type BeginFn<C> =
