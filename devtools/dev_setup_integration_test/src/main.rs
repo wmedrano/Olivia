@@ -19,7 +19,7 @@ fn main() {
         .args(&["run", "--bin", "olivia_backend"])
         .spawn()
         .unwrap();
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    std::thread::sleep(std::time::Duration::from_secs(20));
 
     println!("Creating integration test JACK client.");
     let (client, _) = jack::Client::new(
