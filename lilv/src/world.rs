@@ -221,7 +221,10 @@ impl World {
         )
     }
 
-    /// Return all plugins.
+    /// Return a list of all found plugins.
+    ///
+    /// The returned list contains enough references for each query. The plugins are lazily loaded
+    /// into memory as needed and remain cached.
     pub fn plugins(&self) -> Plugins {
         let world = self.inner.inner.read();
         let ptr = world.as_ptr();

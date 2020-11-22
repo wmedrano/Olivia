@@ -4,28 +4,30 @@ use lilv_sys as lib;
 use std::ptr::NonNull;
 use std::sync::Arc;
 
+/// Contains a list of plugins.
+///
+/// The list contains enough references for each query, but the plugins are lazily loaded into
+/// memory as needed and remain cached.
 pub struct Plugins {
     pub(crate) world: Arc<crate::InnerWorld>,
     pub(crate) ptr: NonNull<lib::LilvPlugins>,
 }
 
+/// An iterator over plugins.
 pub struct PluginsIter<'a> {
     plugins: &'a Plugins,
     iter: *mut lib::LilvIter,
 }
 
 impl Plugins {
-    // Returns the number of plugins.
+    /// Returns the number of plugins.
     pub fn size(&self) -> usize {
         let _ = self.world.inner.read();
         let size = unsafe { lib::lilv_plugins_size(self.as_ptr()) };
         size as usize
     }
 
-    pub fn as_ptr(&self) -> *const lib::LilvPlugins {
-        self.ptr.as_ptr()
-    }
-
+    /// Returns the plugin by uri or None if it does not exist.
     pub fn get_by_uri(&self, uri: &Node) -> Option<Plugin> {
         let _ = self.world.inner.read();
         let uri_ptr = uri.inner.read().as_ptr();
@@ -45,6 +47,11 @@ impl Plugins {
             plugins: self,
             iter,
         }
+    }
+
+    /// Returns the underlying Lilv pointer.
+    pub fn as_ptr(&self) -> *const lib::LilvPlugins {
+        self.ptr.as_ptr()
     }
 }
 

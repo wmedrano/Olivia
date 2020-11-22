@@ -209,7 +209,7 @@ impl<'a> Port<'a> {
             let mut min: *mut lib::LilvNode = std::ptr::null_mut();
             let mut max: *mut lib::LilvNode = std::ptr::null_mut();
             lib::lilv_port_get_range(
-                self.plugin.as_ptr(),
+                self.plugin.inner.read().as_ptr(),
                 self.inner.read().as_ptr(),
                 &mut default,
                 &mut min,
