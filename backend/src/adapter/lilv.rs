@@ -19,7 +19,7 @@ pub fn load_plugins() -> Vec<Lv2PluginBuilder> {
         urid_map: UridMapFeature::default(),
     });
     let supported_features = [w.new_uri(UridMapFeature::URI)];
-    for plugin in w.all_plugins().iter() {
+    for plugin in w.plugins().iter() {
         if plugin.uri().as_uri().is_none() {
             warn!("Could not get uri from {:?}.", plugin.uri().turtle_token());
             continue;

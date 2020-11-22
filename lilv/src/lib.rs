@@ -52,7 +52,7 @@ mod tests {
         let world = World::new();
         world.load_all();
 
-        let plugins = world.all_plugins();
+        let plugins = world.plugins();
         let node = world.new_uri("http://lv2plug.in/plugins/eg-amp");
 
         if let Some(plugin) = plugins.get_by_uri(&node) {

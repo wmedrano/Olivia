@@ -1,63 +1,67 @@
-use crate::collection::*;
 use crate::node::Node;
 use crate::plugin::Plugin;
-use crate::world::InnerWorld;
 use lilv_sys as lib;
 use std::ptr::NonNull;
 use std::sync::Arc;
 
-pub type Plugins = Collection<lib::LilvPlugins, lib::LilvPlugin, Plugin>;
+pub struct Plugins {
+    pub(crate) world: Arc<crate::InnerWorld>,
+    pub(crate) ptr: NonNull<lib::LilvPlugins>,
+}
+
+pub struct PluginsIter<'a> {
+    plugins: &'a Plugins,
+    iter: *mut lib::LilvIter,
+}
 
 impl Plugins {
+    // Returns the number of plugins.
     pub fn size(&self) -> usize {
-        unsafe { lib::lilv_plugins_size(self.inner.read().as_ptr()) as _ }
+        let _ = self.world.inner.read();
+        let size = unsafe { lib::lilv_plugins_size(self.as_ptr()) };
+        size as usize
+    }
+
+    pub fn as_ptr(&self) -> *const lib::LilvPlugins {
+        self.ptr.as_ptr()
     }
 
     pub fn get_by_uri(&self, uri: &Node) -> Option<Plugin> {
-        let inner = self.inner.read().as_ptr();
-        let uri = uri.inner.read().as_ptr();
+        let _ = self.world.inner.read();
+        let uri_ptr = uri.inner.read().as_ptr();
 
+        let plugin_ptr = unsafe { lib::lilv_plugins_get_by_uri(self.as_ptr(), uri_ptr) };
         Some(Plugin::new_borrowed(
-            NonNull::new(unsafe { lib::lilv_plugins_get_by_uri(inner, uri) as _ })?,
-            self.owner.clone(),
+            NonNull::new(plugin_ptr as *mut lib::LilvPlugin)?,
+            self.world.clone(),
         ))
+    }
+
+    // Returns an iterator over all plugins.
+    pub fn iter(&self) -> PluginsIter<'_> {
+        let _ = self.world.inner.read();
+        let iter = unsafe { lib::lilv_plugins_begin(self.as_ptr()) };
+        PluginsIter {
+            plugins: self,
+            iter,
+        }
     }
 }
 
-impl CollectionTrait for Plugins {
-    type Inner = lib::LilvPlugins;
-    type InnerTarget = lib::LilvPlugin;
-    type Target = Plugin;
-    type Owner = Arc<InnerWorld>;
+impl<'a> Iterator for PluginsIter<'a> {
+    type Item = Plugin;
 
-    unsafe fn inner(&self) -> *const Self::Inner {
-        self.inner.read().as_ptr()
-    }
-
-    fn begin_fn() -> BeginFn<Self> {
-        lib::lilv_plugins_begin
-    }
-
-    fn is_end_fn() -> IsEndFn<Self> {
-        lib::lilv_plugins_is_end
-    }
-
-    fn get_fn() -> GetFn<Self> {
-        lib::lilv_plugins_get
-    }
-
-    fn next_fn() -> NextFn<Self> {
-        lib::lilv_plugins_next
-    }
-
-    fn free_fn() -> FreeFn<Self> {
-        fake_free::<Self>
-    }
-
-    unsafe fn get(&self, i: *mut lib::LilvIter) -> Self::Target {
-        Plugin::new_borrowed(
-            NonNull::new(Self::get_fn()(self.inner(), i) as _).unwrap(),
-            self.owner.clone(),
-        )
+    fn next(&mut self) -> Option<Plugin> {
+        let _ = self.plugins.world.inner.read();
+        if unsafe { lib::lilv_plugins_is_end(self.plugins.as_ptr(), self.iter) } {
+            return None;
+        }
+        let plugin_ptr = unsafe { lib::lilv_plugins_get(self.plugins.as_ptr(), self.iter) };
+        self.iter = unsafe { lib::lilv_plugins_next(self.plugins.as_ptr(), self.iter) };
+        let p = Plugin::new_borrowed(
+            NonNull::new(plugin_ptr as *mut _).unwrap(),
+            self.plugins.world.clone(),
+        );
+        Some(p)
     }
 }

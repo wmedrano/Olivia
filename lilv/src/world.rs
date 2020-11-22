@@ -222,13 +222,15 @@ impl World {
     }
 
     /// Return all plugins.
-    pub fn all_plugins(&self) -> Plugins {
-        let world = self.inner.inner.read().as_ptr();
+    pub fn plugins(&self) -> Plugins {
+        let world = self.inner.inner.read();
+        let ptr = world.as_ptr();
+        let plugins_ptr = unsafe { lib::lilv_world_get_all_plugins(ptr) };
 
-        Plugins::new_borrowed(
-            NonNull::new(unsafe { lib::lilv_world_get_all_plugins(world) as _ }).unwrap(),
-            self.inner.clone(),
-        )
+        Plugins {
+            world: self.inner.clone(),
+            ptr: NonNull::new(plugins_ptr as *mut _).unwrap(),
+        }
     }
 
     /// Find nodes matching a triple pattern. Either subject or object may be `None`, but not both.
